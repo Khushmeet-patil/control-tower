@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Sign in · Control Tower</title>
+  <link rel="stylesheet" href="/css/tokens.css">
+  <link rel="stylesheet" href="/css/base.css">
+  <link rel="stylesheet" href="/css/layout.css">
+  <link rel="stylesheet" href="/css/components.css">
+</head>
+<body>
+  <div class="ct-auth">
+    <div class="ct-auth__card">
+      <div class="ct-auth__brand"><span class="ct-sidebar__logo">CT</span> Control Tower</div>
+      <div class="ct-card">
+        <div class="ct-card__body">
+          <h2 style="margin-bottom: 4px;">Sign in</h2>
+          <p class="ct-muted ct-small" style="margin-bottom: 24px;">Use your work email and password.</p>
+          <form id="login-form" novalidate>
+            <div id="login-error" class="ct-form-error ct-hidden" role="alert" style="margin-bottom: 16px;"></div>
+            <div class="ct-field">
+              <label class="ct-label" for="email">Email</label>
+              <input class="ct-input" id="email" name="email" type="email" autocomplete="username" required>
+            </div>
+            <div class="ct-field">
+              <label class="ct-label" for="password">Password</label>
+              <input class="ct-input" id="password" name="password" type="password" autocomplete="current-password" required>
+            </div>
+            <div class="ct-field">
+              <label class="ct-checkbox"><input type="checkbox" id="remember"> Keep me signed in</label>
+            </div>
+            <div class="ct-field">
+              <button class="ct-btn ct-btn--primary ct-btn--block" type="submit">Sign in</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script type="module" src="/js/pages/login.js"></script>
+</body>
+</html>
