@@ -320,6 +320,52 @@
       min-height: 56px
     }
 
+    .team-alloc-box {
+      background: #f8fafc;
+      border: 1px solid #d5dbe4;
+      border-radius: 8px;
+      padding: 10px;
+      margin-top: 4px;
+    }
+
+    .team-alloc-row {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      margin-bottom: 6px;
+    }
+
+    .team-alloc-row select {
+      flex: 2;
+      margin-top: 0 !important;
+    }
+
+    .team-alloc-pct-wrap {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      flex: 1;
+      max-width: 100px;
+    }
+
+    .team-alloc-pct-wrap input {
+      margin-top: 0 !important;
+      width: 100%;
+    }
+
+    .team-alloc-pct-wrap span {
+      font-size: 12px;
+      color: var(--m);
+    }
+
+    .team-alloc-del {
+      padding: 4px 8px !important;
+      font-size: 14px !important;
+      line-height: 1;
+      margin-top: 0 !important;
+      cursor: pointer;
+    }
+
     .bar {
       display: flex;
       gap: 8px;
@@ -422,24 +468,60 @@
     const PR = ['Critical', 'High', 'Medium', 'Low'], ST = ['Ideation', 'Not started', 'In progress', 'Enhancement', 'Blocked', 'On hold', 'Completed', 'Ongoing', 'Under Validation', 'Cancelled'], ACT = ['In progress', 'Enhancement', 'Blocked', 'Under Validation', 'Ongoing'], CAT = ['Commercial', 'Business Challenge', 'Governance', 'Functional', 'Project Tracking', 'Miscellaneous'], MSS = ['Not Started', 'In Progress', 'Done', 'Blocked'], YN = ['Yes', 'No'];
     const f = (k, l, req, type, o) => ({ k, l, req, type: type || 'text', o });
     const S = {
-      init: { t: 'Initiatives', p: 'INI', f: [f('id', 'ID', 0), f('name', 'Name', 1), f('category', 'Category', 0, 'enum', CAT), f('description', 'Description', 0, 'area'), f('objective', 'Business objective', 0, 'area'), f('sponsor', 'Sponsor'), f('priority', 'Priority', 2, 'enum', PR), f('owner', 'Accountable owner (Team ID)', 0, 'ref', 'team'), f('team', 'Team allocation (ID:% , ID:%)'), f('start', 'Planned start', 0, 'date'), f('target', 'Target completion', 0, 'date'), f('status', 'Status', 1, 'enum', ST), f('progress', 'Manual progress % (if no milestones)', 0, 'num'), f('remarks', 'Remarks', 0, 'area'), f('risks', 'Key risks', 0, 'area'), f('deps', 'Dependencies'), f('dev', 'Development done', 0, 'enum', YN), f('test', 'Testing done', 0, 'enum', YN), f('accept', 'Business acceptance', 0, 'enum', YN), f('trained', 'Users trained', 0, 'enum', YN), f('rollout', 'Rollout completed', 0, 'enum', YN), f('adopt', 'Adoption achieved', 0, 'enum', YN), f('evidence', 'Adoption evidence'), f('updated', 'Last update', 0, 'date')] },
+      init: { t: 'Initiatives', p: 'INI', f: [f('id', 'ID', 0), f('name', 'Name', 1), f('categoryLead', 'Category Lead'), f('category', 'Category', 0, 'enum', CAT), f('description', 'Description', 0, 'area'), f('objective', 'Business objective', 0, 'area'), f('sponsor', 'Sponsor'), f('priority', 'Priority', 2, 'enum', PR), f('owner', 'Accountable owner (Team ID)', 0, 'ref', 'team'), f('team', 'Team allocation'), f('start', 'Planned start', 0, 'date'), f('target', 'Target completion', 0, 'date'), f('status', 'Status', 1, 'enum', ST), f('progress', 'Manual progress % (if no milestones)', 0, 'num'), f('remarks', 'Remarks', 0, 'area'), f('risks', 'Key risks', 0, 'area'), f('deps', 'Dependencies'), f('dev', 'Development done', 0, 'enum', YN), f('test', 'Testing done', 0, 'enum', YN), f('accept', 'Business acceptance', 0, 'enum', YN), f('trained', 'Users trained', 0, 'enum', YN), f('rollout', 'Rollout completed', 0, 'enum', YN), f('adopt', 'Adoption achieved', 0, 'enum', YN), f('evidence', 'Adoption evidence'), f('updated', 'Last update', 0, 'date')] },
       team: { t: 'Team', p: 'EMP', f: [f('id', 'ID', 1), f('name', 'Name', 1), f('designation', 'Designation'), f('role', 'Role'), f('skills', 'Skills (comma separated)'), f('primary', 'Primary responsibilities'), f('secondary', 'Secondary responsibilities'), f('backlog', 'Estimated backlog (person-days)', 0, 'num')] },
       ms: { t: 'Schedule', p: 'MS', f: [f('id', 'ID', 1), f('iid', 'Initiative ID', 1, 'ref', 'init'), f('name', 'Activity / milestone', 1), f('pStart', 'Planned start', 0, 'date'), f('pEnd', 'Planned finish', 0, 'date'), f('aStart', 'Actual start', 0, 'date'), f('aEnd', 'Actual finish', 0, 'date'), f('status', 'Status', 1, 'enum', MSS), f('holder', 'Action holder (Team ID)', 0, 'ref', 'team'), f('deps', 'Dependencies'), f('remarks', 'Remarks'), f('link', 'Evidence / deliverable link'), f('gate', 'Validation gate', 0, 'enum', ['Pending', 'Validated', 'Rejected']), f('vdate', 'Validated / rejected on', 0, 'date'), f('vnote', 'Validation note')] },
       demand: { t: 'Demand', p: 'REQ', f: [f('id', 'ID', 1), f('name', 'Request name', 1), f('description', 'Description', 0, 'area'), f('requester', 'Requester'), f('sponsor', 'Sponsor'), f('value', 'Business value', 0, 'area'), f('urgency', 'Urgency', 0, 'enum', ['Low', 'Medium', 'High']), f('priority', 'Priority', 0, 'enum', PR), f('effort', 'Estimated effort (allocation % points)', 0, 'num'), f('reqDate', 'Requested completion', 0, 'date'), f('deps', 'Dependencies'), f('remarks', 'Remarks'), f('decision', 'Decision', 1, 'enum', ['New', 'Accepted', 'Rejected', 'Deferred', 'Clarification required'])] },
       act: { t: 'Actions', p: 'ACT', f: [f('id', 'ID', 1), f('iid', 'Initiative ID', 0, 'ref', 'init'), f('type', 'Type', 1, 'enum', ['Decision', 'Approval', 'Blocker', 'Commitment', 'Action']), f('title', 'Title', 1), f('owner', 'Owner (Team ID)', 0, 'ref', 'team'), f('due', 'Due date', 0, 'date'), f('status', 'Status', 1, 'enum', ['Open', 'Done']), f('severity', 'Severity', 0, 'enum', ['Minor', 'Critical']), f('raised', 'Raised on', 0, 'date'), f('remarks', 'Remarks')] }
     };
-    const MODS = Object.keys(S), TR = { init: ['priority', 'owner', 'target', 'start', 'status', 'team'], ms: ['pEnd', 'status', 'gate'], act: ['status', 'owner', 'due'] };
+    const MODS = Object.keys(S), TR = { init: ['priority', 'owner', 'target', 'start', 'status', 'team', 'categoryLead'], ms: ['pEnd', 'status', 'gate'], act: ['status', 'owner', 'due'] };
     const DEF = () => ({ init: [], team: [], ms: [], demand: [], act: [], hist: [], views: {}, lastBackup: null, cfg: { buffer: 20, stale: 14, blockerDays: 7, soon: 7, backupDays: 7 } });
     function loadDB() { try { const d = JSON.parse(localStorage.getItem(KEY)); if (d && d.init) return fix(d) } catch (e) { } return DEF() }
     function fix(d) { const b = DEF(); Object.keys(b).forEach(k => { if (d[k] == null) d[k] = b[k] }); d.cfg = { ...b.cfg, ...d.cfg }; const mp = { 'Active': 'In progress', 'Not Started': 'Not started', 'On Hold': 'On hold', 'Deferred': 'On hold' }; d.init.forEach(i => { if (mp[i.status]) i.status = mp[i.status] }); return d }
     function save() { try { localStorage.setItem(KEY, JSON.stringify(D)) } catch (e) { alert('Could not save to browser storage: ' + e.message) } }
     let D = loadDB(), V = 'dash', P = null, F = {}, SC = { ch: [], nw: null }, IMP = null;
-    const nm = id => D.team.find(x => x.id == id)?.name || id || '—', tm = id => D.team.find(x => x.id == id), ini = id => D.init.find(x => x.id == id);
+    const nm = id => D.team.find(x => x.id == id || x.name == id)?.name || id || '—', tm = id => D.team.find(x => x.id == id || x.name == id), ini = id => D.init.find(x => x.id == id);
     const days = (a, b = TODAY()) => Math.round((new Date(a) - new Date(b)) / 864e5), age = a => a.raised ? Math.max(0, days(TODAY(), a.raised)) : 0, pw = x => PR.includes(x) ? 4 - PR.indexOf(x) : 0;
     const log = (m, id, field, from, to, note) => { D.hist.unshift({ t: new Date().toISOString(), m, id, field, from: from ?? '', to: to ?? '', note: note || '' }); D.hist.length = Math.min(D.hist.length, 2000) };
     function nextId(m) { const p = S[m].p; let mx = 0; D[m].forEach(r => { const x = String(r.id).match(new RegExp('^' + p + '-(\\d+)$')); if (x) mx = Math.max(mx, +x[1]) }); return p + '-' + String(mx + 1).padStart(3, '0') }
     const parseAlloc = s => (s || '').split(/[,;]/).map(x => x.trim().split(':')).filter(a => a[0] && a[0].trim()).map(a => [a[0].trim(), +a[1] || 0]);
-    const ld = (id, list = D.init) => list.filter(i => ACT.includes(i.status)).reduce((s, i) => s + (parseAlloc(i.team).find(a => a[0] == id)?.[1] || 0), 0);
+    const ld = (id, list = D.init) => list.filter(i => ACT.includes(i.status)).reduce((s, i) => s + (parseAlloc(i.team).find(a => a[0] == id || tm(a[0])?.id == id)?.[1] || 0), 0);
+    function allocEmpOptions(selectedId = '') {
+      let opts = '<option value="">— Select Employee —</option>', found = false;
+      D.team.forEach(p => {
+        const sel = !!(selectedId && (p.id == selectedId || p.name == selectedId));
+        if (sel) found = true;
+        opts += `<option value="${esc(p.id)}" ${sel ? 'selected' : ''}>${esc(p.name)} (${esc(p.id)})</option>`;
+      });
+      if (selectedId && !found) opts += `<option value="${esc(selectedId)}" selected>${esc(selectedId)}</option>`;
+      return opts;
+    }
+    function createAllocRowHtml(empId = '', pct = '') {
+      return `<div class="team-alloc-row"><select class="team-alloc-emp">${allocEmpOptions(empId)}</select><div class="team-alloc-pct-wrap"><input type="number" class="team-alloc-pct" min="0" max="100" step="5" placeholder="%" value="${pct !== '' ? esc(pct) : ''}"><span>%</span></div><button type="button" data-a="alloc-del" class="dng team-alloc-del" title="Remove">×</button></div>`;
+    }
+    function syncTeamAlloc() {
+      const box = $('#team-alloc-box'); if (!box) return;
+      const rows = box.querySelectorAll('.team-alloc-row'), allocs = []; let total = 0;
+      rows.forEach(r => {
+        const emp = (r.querySelector('.team-alloc-emp')?.value || '').trim();
+        const pctVal = (r.querySelector('.team-alloc-pct')?.value || '').trim();
+        if (emp) { const pct = pctVal === '' ? 100 : (parseInt(pctVal, 10) || 0); allocs.push(`${emp}:${pct}`); total += pct }
+      });
+      const hidden = box.querySelector('#team-alloc-val'); if (hidden) hidden.value = allocs.join(', ');
+      const sumEl = box.querySelector('#team-alloc-summary'); if (sumEl) sumEl.innerHTML = `Total: <b style="color:${total > 100 ? 'var(--r)' : total === 100 ? 'var(--g)' : 'inherit'}">${total}%</b>`;
+    }
+    function addAllocRow() {
+      const list = $('#team-alloc-list'); if (!list) return;
+      const div = document.createElement('div'); div.innerHTML = createAllocRowHtml('', '');
+      list.appendChild(div.firstElementChild); syncTeamAlloc();
+    }
+    function delAllocRow(btn) {
+      const row = btn.closest('.team-alloc-row');
+      if (row) {
+        const list = row.parentElement; row.remove();
+        if (list && list.children.length === 0) addAllocRow(); else syncTeamAlloc();
+      }
+    }
     const avail = () => 100 - D.cfg.buffer, pst = l => l > avail() ? 'Overloaded' : l < avail() * .5 ? 'Underutilised' : 'Balanced';
     const gate = m => m.status == 'Done' ? (m.gate || 'Pending') : (m.gate == 'Rejected' ? 'Rejected' : ''), fin = m => gate(m) == 'Validated', PV = () => D.ms.filter(m => gate(m) == 'Pending').length;
     const msst = m => esc(m.status) + (gate(m) ? ` <span class="pill ${gate(m) == 'Validated' ? 'Green' : gate(m) == 'Rejected' ? 'Red' : 'Amber'}">${gate(m) == 'Pending' ? 'Awaiting validation' : gate(m)}</span>` : ''), msb = m => m.status != 'Done' ? btn('msdone', 'ms', m.id, 'Complete') : gate(m) == 'Pending' ? btn('vrev', 'ms', m.id, 'Validate', 'pri') : '';
@@ -509,7 +591,7 @@
         const hm = Object.fromEntries(ac.map(i => [i.id, health(i)])), rk = h => ['Red', 'Amber', 'Grey', 'Green'].indexOf(h),
           board = ac.slice().sort((a, b) => rk(hm[a.id].h) - rk(hm[b.id].h) || pw(b.priority) - pw(a.priority)).map(i => {
             const n = nextMs(i), na = D.act.filter(a => a.iid == i.id && a.status != 'Done' && a.type != 'Decision').sort((a, b) => (a.due || '9') > (b.due || '9') ? 1 : -1)[0], pv = msOf(i).filter(m => gate(m) == 'Pending').length, p = prog(i);
-            return `<tr><td><a href="#" data-a="ws" data-id="${esc(i.id)}"><b>${esc(i.name)}</b></a><br><span class="m">${esc(i.category || '')}</span></td><td>${esc(i.priority || '—')}</td><td>${esc(nm(i.owner))}</td><td title="${esc(hm[i.id].w.join('; '))}">${pill(hm[i.id].h)}</td><td style="min-width:120px"><div class="dr"><div class="bar2"><i style="width:${p}%"></i></div><b>${p}%</b></div>${pv ? `<span class="m">⏳ ${pv} to validate</span>` : ''}</td><td>${n ? esc(n.name) + '<br><span class="m">' + (n.pEnd || 'no date') + ' · ' + esc(nm(n.holder)) + '</span>' : '<span style="color:var(--r)">none</span>'}</td><td>${na ? esc(na.title) + '<br><span class="m">' + (na.due || 'no date') + ' · ' + esc(nm(na.owner)) + '</span>' : '—'}</td></tr>`
+            return `<tr><td><a href="#" data-a="ws" data-id="${esc(i.id)}"><b>${esc(i.name)}</b></a><br><span class="m">${esc(i.category || '')}${i.categoryLead ? ' · Lead: ' + esc(nm(i.categoryLead)) : ''}</span></td><td>${esc(i.priority || '—')}</td><td>${esc(nm(i.owner))}</td><td title="${esc(hm[i.id].w.join('; '))}">${pill(hm[i.id].h)}</td><td style="min-width:120px"><div class="dr"><div class="bar2"><i style="width:${p}%"></i></div><b>${p}%</b></div>${pv ? `<span class="m">⏳ ${pv} to validate</span>` : ''}</td><td>${n ? esc(n.name) + '<br><span class="m">' + (n.pEnd || 'no date') + ' · ' + esc(nm(n.holder)) + '</span>' : '<span style="color:var(--r)">none</span>'}</td><td>${na ? esc(na.title) + '<br><span class="m">' + (na.due || 'no date') + ' · ' + esc(nm(na.owner)) + '</span>' : '—'}</td></tr>`
           }),
           hold = [].concat(D.ms.filter(m => gate(m) == 'Pending').map(m => ({ k: 0, t: 'Validate', w: m.name + ' — ' + (ini(m.iid)?.name || m.iid), o: nm(m.holder), d: m.aEnd ? 'done ' + m.aEnd : '', b: btn('vrev', 'ms', m.id, 'Review', 'pri') })),
             bl.map(a => ({ k: 1, t: 'Blocker', w: a.title, o: nm(a.owner), d: age(a) + 'd old', b: btn('edit', 'act', a.id, 'Open') })),
@@ -538,12 +620,12 @@
         const cats = CAT;
         return `<div class="fl"><input data-f="q" placeholder="Filter text" value="${esc(F.q || '')}">${sel('priority', 'Priority', PR)}${sel('owner', 'Owner', D.team.map(p => [p.id, p.name]))}${sel('category', 'Category', cats)}${sel('status', 'Status', ST)}${sel('health', 'Health', ['Green', 'Amber', 'Red', 'Grey'])}${sel('sort', 'Sort: priority', [['target', 'Sort: target'], ['health', 'Sort: health'], ['name', 'Sort: name']])}
  <select data-f="view"><option value="">Saved views…</option>${Object.keys(D.views).map(v => `<option ${F.view == v ? 'selected' : ''}>${esc(v)}</option>`).join('')}</select><button data-a="saveview">Save view</button><button data-a="delview">Delete view</button><button class="pri" data-a="add" data-m="init">+ Initiative</button></div>
- ${T(['ID', 'Name', 'Priority', 'Owner', 'Status', 'Health', 'Progress', 'Next milestone', 'Target', ''], R.map(i => { const h = health(i), n = nextMs(i); return `<tr><td>${esc(i.id)}</td><td><a href="#" data-a="ws" data-id="${esc(i.id)}"><b>${esc(i.name)}</b></a></td><td>${esc(i.priority)}</td><td>${esc(nm(i.owner))}</td><td>${esc(i.status)}</td><td title="${esc(h.w.join('; '))}">${pill(h.h)}</td><td>${prog(i)}%</td><td>${n ? esc(n.name) + ' (' + (n.pEnd || '?') + ')' : '—'}</td><td>${i.target || '—'}</td><td>${btn('edit', 'init', i.id, 'Edit')}${btn('del', 'init', i.id, 'Del', 'dng')}</td></tr>` }))}`
+ ${T(['ID', 'Name', 'Category Lead', 'Priority', 'Owner', 'Status', 'Health', 'Progress', 'Next milestone', 'Target', ''], R.map(i => { const h = health(i), n = nextMs(i); return `<tr><td>${esc(i.id)}</td><td><a href="#" data-a="ws" data-id="${esc(i.id)}"><b>${esc(i.name)}</b></a></td><td>${esc(nm(i.categoryLead) || '—')}</td><td>${esc(i.priority)}</td><td>${esc(nm(i.owner))}</td><td>${esc(i.status)}</td><td title="${esc(h.w.join('; '))}">${pill(h.h)}</td><td>${prog(i)}%</td><td>${n ? esc(n.name) + ' (' + (n.pEnd || '?') + ')' : '—'}</td><td>${i.target || '—'}</td><td>${btn('edit', 'init', i.id, 'Edit')}${btn('del', 'init', i.id, 'Del', 'dng')}</td></tr>` }))}`
       },
       ws() {
         const i = ini(P); if (!i) return '<p>Initiative not found.</p>'; const h = health(i), ms = msOf(i).sort((a, b) => (a.pEnd || '') > (b.pEnd || '') ? 1 : -1), ac = D.act.filter(a => a.iid == i.id), n = nextMs(i);
         return `<div class="bar"><button data-a="go" data-id="init">← Portfolio</button>${btn('edit', 'init', i.id, 'Edit initiative', 'pri')}<button data-a="sched" data-id="${esc(i.id)}">Filtered schedule</button></div>
- <div class="card"><h2 style="margin:0">${esc(i.id)} · ${esc(i.name)} ${pill(h.h)}</h2><p class="m">${esc(i.category)} · ${esc(i.priority || 'No priority')} · ${i.status} · Sponsor: ${esc(i.sponsor || '—')} · Owner: <b>${esc(nm(i.owner))}</b> · ${i.start || '?'} → ${i.target || '?'} · Progress ${prog(i)}%</p><p>${esc(i.description)}</p><p><b>Objective:</b> ${esc(i.objective || '—')}</p><p><b>Health reasons:</b> ${esc(h.w.join('; ') || '—')}</p><p><b>Next milestone:</b> ${n ? esc(n.name) + ' · ' + n.pEnd + ' · ' + esc(nm(n.holder)) : '<span style="color:var(--r)">None defined</span>'}</p></div>
+ <div class="card"><h2 style="margin:0">${esc(i.id)} · ${esc(i.name)} ${pill(h.h)}</h2><p class="m">${esc(i.category)} · ${esc(i.priority || 'No priority')} · ${i.status} · Category Lead: <b>${esc(nm(i.categoryLead) || '—')}</b> · Sponsor: ${esc(i.sponsor || '—')} · Owner: <b>${esc(nm(i.owner))}</b> · ${i.start || '?'} → ${i.target || '?'} · Progress ${prog(i)}%</p><p>${esc(i.description)}</p><p><b>Objective:</b> ${esc(i.objective || '—')}</p><p><b>Health reasons:</b> ${esc(h.w.join('; ') || '—')}</p><p><b>Next milestone:</b> ${n ? esc(n.name) + ' · ' + n.pEnd + ' · ' + esc(nm(n.holder)) : '<span style="color:var(--r)">None defined</span>'}</p></div>
  <div class="grid"><div class="card"><h3>People & allocation</h3>${parseAlloc(i.team).map(([id, p]) => `<div>${esc(nm(id))} — ${p}%</div>`).join('') || '<span class="m">None</span>'}</div><div class="card"><h3>Risks & dependencies</h3><p>${esc(i.risks || '—')}</p><p>${esc(i.deps || '—')}</p><p class="m">${esc(i.remarks)}</p></div>
  <div class="card"><h3>Adoption</h3>${[['Development', 'dev'], ['Testing', 'test'], ['Business acceptance', 'accept'], ['Users trained', 'trained'], ['Rollout', 'rollout'], ['Adoption', 'adopt']].map(([l, k]) => `<div>${i[k] == 'Yes' ? '✅' : '⬜'} ${l}</div>`).join('')}<div class="m">${esc(i.evidence)}</div></div></div>
  <div class="card"><h3>Schedule ${btn('add', 'ms', '', '+ Milestone', 'pri')}</h3>${gantt(ms)}${T(['ID', 'Milestone', 'Planned', 'Status', 'Holder', ''], ms.map(m => `<tr class="${od(m) ? 'late' : ''}"><td>${esc(m.id)}</td><td>${esc(m.name)}</td><td>${m.pStart || ''} → ${m.pEnd || ''}</td><td>${msst(m)}</td><td>${esc(nm(m.holder))}</td><td>${msb(m)}${btn('edit', 'ms', m.id, 'Edit')}</td></tr>`))}</div>
@@ -558,7 +640,7 @@
       team() {
         const sk = (F.skill || '').toLowerCase(), R = D.team.filter(p => !sk || (p.skills || '').toLowerCase().includes(sk));
         return `<div class="fl"><input data-f="skill" placeholder="Find by skill (shows spare capacity)" value="${esc(F.skill || '')}"><button class="pri" data-a="add" data-m="team">+ Team member</button><span class="m">Usable capacity = ${avail()}% (buffer ${D.cfg.buffer}% for unplanned work)</span></div>
- <div class="card">${T(['ID', 'Name', 'Role', 'Skills', 'Allocated', 'Free', 'Status', 'Initiatives', 'Open actions', 'Backlog (pd)', ''], R.map(p => { const l = ld(p.id), s = pst(l), ins = D.init.filter(i => ACT.includes(i.status) && parseAlloc(i.team).some(a => a[0] == p.id)).map(i => i.name); return `<tr><td>${p.id}</td><td><b>${esc(p.name)}</b><br><span class="m">${esc(p.designation)}</span></td><td>${esc(p.role)}</td><td>${esc(p.skills)}</td><td>${l}%</td><td>${Math.max(0, avail() - l)}%</td><td>${pill(s)}</td><td>${esc(ins.join(', '))}</td><td>${cnt(D.act, a => a.owner == p.id && a.status != 'Done')}</td><td>${p.backlog || ''}</td><td>${btn('edit', 'team', p.id, 'Edit')}${btn('del', 'team', p.id, 'Del', 'dng')}</td></tr>` }))}</div>`
+ <div class="card">${T(['ID', 'Name', 'Role', 'Skills', 'Allocated', 'Free', 'Status', 'Initiatives', 'Open actions', 'Backlog (pd)', ''], R.map(p => { const l = ld(p.id), s = pst(l), ins = D.init.filter(i => ACT.includes(i.status) && parseAlloc(i.team).some(a => a[0] == p.id || tm(a[0])?.id == p.id)).map(i => i.name); return `<tr><td>${p.id}</td><td><b>${esc(p.name)}</b><br><span class="m">${esc(p.designation)}</span></td><td>${esc(p.role)}</td><td>${esc(p.skills)}</td><td>${l}%</td><td>${Math.max(0, avail() - l)}%</td><td>${pill(s)}</td><td>${esc(ins.join(', '))}</td><td>${cnt(D.act, a => a.owner == p.id && a.status != 'Done')}</td><td>${p.backlog || ''}</td><td>${btn('edit', 'team', p.id, 'Edit')}${btn('del', 'team', p.id, 'Del', 'dng')}</td></tr>` }))}</div>`
       },
       wi() {
         const sim = simList(), cur = D.team, fi = (F.wf || 'priority'), opt = fi == 'priority' ? PR : fi == 'status' ? ST : null;
@@ -627,7 +709,9 @@
       return null
     }
     function nrm(m, x) {
-      const r = {}, mp = {}; S[m].f.forEach(d => { mp[d.k.toLowerCase()] = d; mp[d.l.toLowerCase().replace(/[*\s]/g, '')] = d }); Object.keys(x).forEach(k => { const d = mp[k.toLowerCase().replace(/[*\s]/g, '').replace(/^\ufeff/, '')]; if (d) r[d.k] = x[k] });
+      const r = {}, mp = {}; S[m].f.forEach(d => { mp[d.k.toLowerCase()] = d; mp[d.l.toLowerCase().replace(/[*\s]/g, '')] = d });
+      if (m == 'init') { const tf = S.init.f.find(d => d.k == 'team'); if (tf) { mp['teamallocation'] = tf; mp['teamallocation(id:%,id:%)'] = tf } }
+      Object.keys(x).forEach(k => { const d = mp[k.toLowerCase().replace(/[*\s]/g, '').replace(/^\ufeff/, '')]; if (d) r[d.k] = x[k] });
       S[m].f.forEach(d => { let v = r[d.k]; v = v == null ? '' : String(v).trim(); if (d.type == 'enum' && v) { if (d.o === YN) { if (/^(y|true|1)$/i.test(v)) v = 'Yes'; else if (/^(n|false|0)$/i.test(v)) v = 'No' } const o = d.o.find(e => e.toLowerCase() == v.toLowerCase()); if (o) v = o } if (d.type == 'date' && v) { const pd = pdate(v); if (pd) v = pd } r[d.k] = v }); return r
     }
     function vrec(m, r) {
@@ -645,12 +729,30 @@
       modal(`<h3>${id ? 'Edit' : 'Add'} ${s.t}</h3><form id="fm" data-m="${m}" data-old="${esc(id || '')}">` + s.f.map(d => {
         const v = r[d.k] ?? ''; let i;
         if (d.type == 'area') i = `<textarea name="${d.k}">${esc(v)}</textarea>`;
+        else if (m == 'init' && d.k == 'categoryLead') {
+          const hasCustom = v && !D.team.some(p => p.name == v || p.id == v);
+          i = `<select name="${d.k}"><option value="">— Select Category Lead —</option>${D.team.map(p => `<option value="${esc(p.name)}" ${v == p.name || v == p.id ? 'selected' : ''}>${esc(p.name)}</option>`).join('')}${hasCustom ? `<option value="${esc(v)}" selected>${esc(v)}</option>` : ''}</select>`;
+        }
+        else if (m == 'init' && d.k == 'team') {
+          const existing = parseAlloc(v);
+          const rowsHtml = existing.length ? existing.map(([empId, pct]) => createAllocRowHtml(empId, pct)).join('') : createAllocRowHtml('', '');
+          const totalPct = existing.reduce((tot, a) => tot + (+a[1] || 0), 0);
+          i = `<div id="team-alloc-box" class="team-alloc-box">
+            <input type="hidden" name="team" id="team-alloc-val" value="${esc(v)}">
+            <div id="team-alloc-list">${rowsHtml}</div>
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-top:8px;padding-top:6px;border-top:1px dashed #cbd5e1">
+              <button type="button" data-a="alloc-add" style="padding:4px 10px;font-size:12px;cursor:pointer">+ Add Member</button>
+              <span id="team-alloc-summary" style="font-size:12px;color:var(--m)">Total: <b style="color:${totalPct > 100 ? 'var(--r)' : totalPct === 100 ? 'var(--g)' : 'inherit'}">${totalPct}%</b></span>
+            </div>
+          </div>`;
+        }
         else if (d.type == 'enum' || d.type == 'ref') { const o = d.type == 'enum' ? d.o : D[d.o].map(x => x.id); i = `<select name="${d.k}"><option value="">—</option>${o.map(x => `<option value="${esc(x)}" ${x == v ? 'selected' : ''}>${esc(d.type == 'ref' && d.o == 'team' ? x + ' · ' + nm(x) : d.type == 'ref' ? x + ' · ' + ini(x).name : x)}</option>`).join('')}</select>` }
         else i = `<input name="${d.k}" type="${d.type == 'date' ? 'date' : d.type == 'num' ? 'number' : 'text'}" value="${esc(v)}" ${d.k == 'id' && id ? 'readonly' : m == 'init' && d.k == 'id' ? 'placeholder="blank = auto-generate"' : ''}>`;
         return `<label>${d.l}${d.req == 1 ? ' *' : d.req == 2 ? ' * (in delivery)' : ''}${i}</label>`
       }).join('') + `<div class="bar"><button class="pri" type="submit">Save</button><button type="button" data-a="close">Cancel</button></div></form>`)
     }
     function submitForm(fm) {
+      if (fm.dataset.m == 'init') syncTeamAlloc();
       const m = fm.dataset.m, old = fm.dataset.old, fd = new FormData(fm), raw = {}; S[m].f.forEach(d => raw[d.k] = String(fd.get(d.k) || '').trim()); const r = nrm(m, raw); if (!r.id && m == 'init') r.id = nextId(m);
       const e = vrec(m, r); if (!old && D[m].some(x => x.id == r.id)) e.push('ID already exists'); if (e.length) return alert('Please fix:\n• ' + e.join('\n• '));
       if (m == 'init') r.updated = TODAY(); const ex = old ? D[m].find(x => x.id == old) : null; if (m == 'ms') { if (r.status == 'Done' && ex?.status != 'Done' && r.gate != 'Validated') { r.gate = 'Pending'; r.vdate = '' } if (r.status != 'Done' && r.gate != 'Rejected') { r.gate = ''; r.vdate = '' } }
@@ -664,7 +766,7 @@
       if (m == 'team') { const o = D.init.filter(i => i.owner == id); if (o.length) return alert(`Cannot delete: ${r.name} is accountable owner of ${o.length} initiative(s). Reassign them first.`); msg += `\nThey will be unassigned from milestones, actions and allocations.` }
       if (!confirm(msg)) return;
       if (m == 'init') { D.ms = D.ms.filter(x => x.iid != id); D.act = D.act.filter(x => x.iid != id) }
-      if (m == 'team') { D.ms.forEach(x => { if (x.holder == id) x.holder = '' }); D.act.forEach(x => { if (x.owner == id) x.owner = '' }); D.init.forEach(i => { i.team = parseAlloc(i.team).filter(a => a[0] != id).map(a => a.join(':')).join(',') }) }
+      if (m == 'team') { D.ms.forEach(x => { if (x.holder == id) x.holder = '' }); D.act.forEach(x => { if (x.owner == id) x.owner = '' }); D.init.forEach(i => { i.team = parseAlloc(i.team).filter(a => a[0] != id && a[0] != r.name).map(a => a.join(':')).join(','); if (i.categoryLead == id || i.categoryLead == r.name) i.categoryLead = '' }) }
       D[m] = D[m].filter(x => x.id != id); log(m, id, 'deleted', r.name || r.title || '', ''); save(); render()
     }
     /* ---------- import / export ---------- */
@@ -687,7 +789,7 @@
     function vimp(m, rows, mode, fn) {
       const ok = [], bad = [], seen = new Set(), s = S[m]; let nn = +nextId('init').split('-')[1]; const ng = () => { let id; do { id = 'INI-' + String(nn++).padStart(3, '0') } while (D.init.some(z => z.id == id) || seen.has(id)); return id };
       if (!rows.length) return { m, mode, fn, ok, bad: [{ n: '-', id: '', why: ['File has no data rows'] }] };
-      const found = new Set(Object.keys(nrm(m, Object.fromEntries(Object.keys(rows[0]).map(k => [k, 'x'])))).filter(k => Object.keys(rows[0]).some(h => { const z = h.toLowerCase().replace(/[*\s]/g, '').replace(/^\ufeff/, ''); return z == k.toLowerCase() || s.f.some(d => d.k == k && d.l.toLowerCase().replace(/[*\s]/g, '') == z) })));
+      const found = new Set(Object.keys(nrm(m, Object.fromEntries(Object.keys(rows[0]).map(k => [k, 'x'])))).filter(k => Object.keys(rows[0]).some(h => { const z = h.toLowerCase().replace(/[*\s]/g, '').replace(/^\ufeff/, ''); return z == k.toLowerCase() || s.f.some(d => (d.k == k && d.l.toLowerCase().replace(/[*\s]/g, '') == z) || (k == 'team' && (z == 'teamallocation' || z == 'teamallocation(id:%,id:%)'))) })));
       const miss = s.f.filter(d => d.req == 1 && !found.has(d.k)).map(d => d.k); if (miss.length) return { m, mode, fn, ok, bad: [{ n: 'header', id: '', why: ['Missing mandatory column(s): ' + miss.join(', ')] }] };
       rows.forEach((x, i) => {
         const r = nrm(m, x), n = i + 2; if (!r.id) { if (m != 'init') return bad.push({ n, id: '', why: ['Missing ID'] }); r.id = ng() } if (/^EXAMPLE/i.test(r.id)) return;
@@ -726,6 +828,7 @@
       const t = e.target.closest('[data-a]'); if (!t) return; const { a, m, id, k } = t.dataset; if (a == 'ws' || t.tagName == 'A') e.preventDefault();
       if (a == 'go') go(id); else if (a == 'ws') go('ws', id); else if (a == 'sched') go('sched', id); else if (a == 'close') closeM();
       else if (a == 'add') form(m, '', m == 'ms' || m == 'act' ? (V == 'ws' ? { iid: P } : V == 'sched' && P ? { iid: P } : {}) : {}); else if (a == 'edit') form(m, id); else if (a == 'del') del(m, id);
+      else if (a == 'alloc-add') addAllocRow(); else if (a == 'alloc-del') delAllocRow(t);
       else if (a == 'done') { const r = D.act.find(x => x.id == id); log('act', id, 'status', r.status, 'Done'); r.status = 'Done'; save(); render() }
       else if (a == 'tog') { const i = ini(id), n = i[k] == 'Yes' ? 'No' : 'Yes'; log('init', id, k, i[k], n); i[k] = n; i.updated = TODAY(); save(); render() }
       else if (a == 'saveview') { const n = prompt('Name for this view:'); if (n) { D.views[n] = { ...F, view: undefined }; save(); F.view = n; render() } }
@@ -772,11 +875,27 @@
     document.addEventListener('submit', e => { e.preventDefault(); if (e.target.matches('#fm')) submitForm(e.target) });
     document.addEventListener('change', e => {
       const t = e.target;
-      if (t.id == 'qa' && t.value) { form(t.value); t.value = '' } else if (t.id == 'fi' && t.files[0]) { handleFile(t.files[0]); t.value = '' }
+      if (t.matches('.team-alloc-emp')) {
+        const row = t.closest('.team-alloc-row');
+        const pctInput = row?.querySelector('.team-alloc-pct');
+        if (pctInput && pctInput.value === '' && t.value) {
+          let currentTotal = 0;
+          document.querySelectorAll('.team-alloc-row').forEach(r => {
+            if (r !== row && r.querySelector('.team-alloc-emp')?.value) {
+              currentTotal += parseInt(r.querySelector('.team-alloc-pct')?.value, 10) || 0;
+            }
+          });
+          pctInput.value = Math.max(0, 100 - currentTotal) || 100;
+        }
+        syncTeamAlloc();
+      } else if (t.matches('.team-alloc-pct')) {
+        syncTeamAlloc();
+      } else if (t.id == 'qa' && t.value) { form(t.value); t.value = '' } else if (t.id == 'fi' && t.files[0]) { handleFile(t.files[0]); t.value = '' }
       else if (t.id == 'rf' && t.files[0]) { t.files[0].text().then(x => { try { restore(JSON.parse(x)) } catch (er) { alert('Invalid JSON: ' + er.message) } }); t.value = '' }
       else if (t.dataset.c) { const v = +t.value; if (isNaN(v) || v < 0) return alert('Enter a valid number'); D.cfg[t.dataset.c] = v; save(); render() }
       else if (t.dataset.f) { const k = t.dataset.f; if (k == 'sp') { P = t.value || null } else if (k == 'view') { F = t.value ? { ...D.views[t.value], view: t.value } : {} } else F[k] = t.value; render() }
     });
+    document.addEventListener('input', e => { if (e.target.matches('.team-alloc-pct')) syncTeamAlloc() });
     $('#gs').addEventListener('keydown', e => { if (e.key == 'Enter' && e.target.value.trim()) go('search', e.target.value.trim()) });
     render();
   </script>
