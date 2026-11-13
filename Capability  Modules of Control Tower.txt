@@ -1,0 +1,23 @@
+Capability / Modules of Control Tower :
+
+1. Trusted source of organisational work- All programmes, projects, milestones, tasks, requests, assignments, decisions and evidence will be stored in one governed database. Screens, imports, dashboards, tools, APIs and presentations will read from and update the same records through one controlled service layer, preventing conflicting spreadsheet or screen-level copies.
+
+2. Clear accountable and responsible ownership- Every managed work item will have exactly one accountable owner who answers for the outcome and at least one responsible owner who leads delivery. Contributors can also be assigned functional roles, duties, allocation percentages and individually accountable milestones or tasks.
+
+3. Work distribution down the hierarchy and as per availability- Senior leaders can create work at company, division or programme level and distribute it to departments, teams and employees. Managers can break parent work into child items and assign it using role, skill, current allocation, usable capacity and availability, while ownership is inherited unless deliberately overridden.
+
+4. Progress and capacity roll-up upward- Validated milestone progress, health, overdue work, employee allocations and available capacity will aggregate from employee to team, department, division and executive levels. Leaders can drill down from a rolled-up figure to the exact child items and people contributing to it. 
+
+5. Validated, explainable progress- A contributor or responsible owner can declare work complete, but configured milestones count toward progress only after the required gate checks and approval. Every Red, Amber, Grey or Green result will show the rule, source record, reason, recommended action and escalation owner so users can understand and trust the result. 
+
+6. Configurable dashboards inside the platform- Authorised users can create dashboards from saved queries and reusable widgets such as KPIs, tables, status charts, timelines, capacity charts and Action Centre lists. Each widget uses the same governed data and supports filters, hierarchy scope and drill-down without creating a separate reporting database. 
+
+7. Presentation mode using the same live data- Dashboard pages can be arranged into a full-screen management review with notes. The presenter can use current live data or lock the presentation to an approved weekly snapshot, then export the same results to PowerPoint, PDF or Excel without manually copying numbers. |
+
+8. Tools for the same work, easily accessible from the platform- Forms, checklists, calculators, readiness assessments, automations and approved plugins will be available through a central Tool Centre and may also appear inside the relevant work-item page. Tools will use platform permissions and commands, write back to the same source records, and create audit entries instead of maintaining separate data copies. 
+
+9. No-code configuration- PMO or administrator users can rename terms, maintain the organisation tree, define item types and fields, manage lookups, design workflows and gates, configure health rules and thresholds, and build reusable views, dashboards and templates without changing Python or JavaScript code. Configuration will be versioned, audited and publishable.
+
+10. Complete change and decision traceability- Every material create, update, reassignment, handover, gate decision, import, tool action and scenario application will record who acted, what changed, previous and new values, date and time, reason, source and correlation ID. Historical snapshots and published review packs preserve exactly what was reported at that time.
+
+11. RBAC and a custom dashboard for every member login- Role-based access control will combine tenant, organisation unit, designation, platform role, assignment and field permissions. After login, each member receives a personalised home dashboard showing only authorised information, such as “I am accountable for,” “I am responsible for,” “My assigned work,” pending approvals, upcoming deadlines and team exceptions. Executives see organisation roll-ups, managers see their unit and descendants, contributors see assigned work, PMO/Admin users see configuration controls, and viewers receive read-only access.

@@ -1,0 +1,785 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Management Control Tower</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <style>
+    :root {
+      --bg: #eef1f5;
+      --c: #fff;
+      --t: #1f2937;
+      --m: #6b7280;
+      --b: #2563eb;
+      --g: #16a34a;
+      --a: #d97706;
+      --r: #dc2626;
+      --n: #9ca3af;
+      --sh: 5px 5px 12px #d3d9e2, -5px -5px 12px #fff
+    }
+
+    * {
+      box-sizing: border-box
+    }
+
+    body {
+      margin: 0;
+      font: 14px/1.45 system-ui, Segoe UI, Arial, sans-serif;
+      background: var(--bg);
+      color: var(--t);
+      display: grid;
+      grid-template-columns: 200px 1fr;
+      min-height: 100vh
+    }
+
+    aside {
+      background: #f8fafc;
+      padding: 14px 10px;
+      box-shadow: var(--sh);
+      position: sticky;
+      top: 0;
+      height: 100vh
+    }
+
+    aside h1 {
+      font-size: 15px;
+      margin: 4px 8px 14px;
+      color: var(--b)
+    }
+
+    aside a {
+      display: block;
+      padding: 8px 10px;
+      border-radius: 8px;
+      cursor: pointer;
+      color: var(--m);
+      margin-bottom: 2px
+    }
+
+    aside a.on {
+      background: #fff;
+      color: var(--b);
+      box-shadow: var(--sh);
+      font-weight: 600
+    }
+
+    main {
+      padding: 16px 22px;
+      min-width: 0
+    }
+
+    header {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      margin-bottom: 12px;
+      flex-wrap: wrap
+    }
+
+    input,
+    select,
+    textarea,
+    button {
+      font: inherit;
+      padding: 6px 9px;
+      border: 1px solid #d5dbe4;
+      border-radius: 8px;
+      background: #fff;
+      color: var(--t)
+    }
+
+    button {
+      cursor: pointer
+    }
+
+    button:hover {
+      border-color: var(--b)
+    }
+
+    button.pri {
+      background: var(--b);
+      color: #fff;
+      border-color: var(--b)
+    }
+
+    button.dng {
+      color: var(--r)
+    }
+
+    .card {
+      background: var(--c);
+      border-radius: 14px;
+      box-shadow: var(--sh);
+      padding: 14px;
+      margin-bottom: 14px
+    }
+
+    .card h3 {
+      margin: 0 0 8px;
+      font-size: 14px
+    }
+
+    .grid {
+      display: grid;
+      gap: 14px;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr))
+    }
+
+    .kpi {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 14px
+    }
+
+    .kpi div {
+      flex: 1;
+      min-width: 120px;
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: var(--sh);
+      padding: 10px 14px
+    }
+
+    .kpi b {
+      font-size: 22px;
+      display: block
+    }
+
+    .kpi span {
+      color: var(--m);
+      font-size: 12px
+    }
+
+    .tw {
+      overflow: auto
+    }
+
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      font-size: 13px
+    }
+
+    th {
+      text-align: left;
+      color: var(--m);
+      font-weight: 600;
+      padding: 6px 8px;
+      border-bottom: 2px solid #e5e9f0;
+      white-space: nowrap
+    }
+
+    td {
+      padding: 6px 8px;
+      border-bottom: 1px solid #eef1f5;
+      vertical-align: top
+    }
+
+    tr.late td {
+      background: #fef2f2
+    }
+
+    .emp {
+      color: var(--m);
+      text-align: center;
+      padding: 18px
+    }
+
+    .pill {
+      padding: 2px 9px;
+      border-radius: 99px;
+      font-size: 12px;
+      color: #fff;
+      white-space: nowrap
+    }
+
+    .Green,
+    .Done,
+    .Balanced {
+      background: var(--g)
+    }
+
+    .Amber,
+    .Underutilised {
+      background: var(--a)
+    }
+
+    .Red,
+    .Overloaded {
+      background: var(--r)
+    }
+
+    .Grey,
+    .na {
+      background: var(--n)
+    }
+
+    .Blue {
+      background: var(--b)
+    }
+
+    .dr {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin: 3px 0;
+      font-size: 12px
+    }
+
+    .dr span {
+      width: 90px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap
+    }
+
+    .bar2 {
+      flex: 1;
+      background: #e8ecf2;
+      border-radius: 6px;
+      height: 8px
+    }
+
+    .bar2 i {
+      display: block;
+      height: 8px;
+      border-radius: 6px;
+      background: var(--b)
+    }
+
+    .top {
+      display: flex;
+      gap: 10px;
+      border-left: 4px solid var(--b);
+      padding: 8px 10px;
+      margin-bottom: 8px;
+      background: #f8fafc;
+      border-radius: 8px
+    }
+
+    .top .n {
+      font-weight: 700;
+      color: var(--b);
+      font-size: 18px
+    }
+
+    .top p {
+      margin: 2px 0
+    }
+
+    .m {
+      color: var(--m)
+    }
+
+    #banner {
+      background: #fffbeb;
+      border: 1px solid #fcd34d;
+      border-radius: 10px;
+      padding: 8px 12px;
+      margin-bottom: 12px
+    }
+
+    .mb {
+      position: fixed;
+      inset: 0;
+      background: #0006;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      overflow: auto;
+      padding: 30px 10px;
+      z-index: 9
+    }
+
+    .md {
+      background: #fff;
+      border-radius: 14px;
+      padding: 18px;
+      width: min(680px, 100%)
+    }
+
+    .md label {
+      display: block;
+      margin: 8px 0;
+      font-size: 12px;
+      color: var(--m)
+    }
+
+    .md input,
+    .md select,
+    .md textarea {
+      display: block;
+      width: 100%;
+      margin-top: 3px
+    }
+
+    .md textarea {
+      min-height: 56px
+    }
+
+    .bar {
+      display: flex;
+      gap: 8px;
+      margin-top: 12px;
+      flex-wrap: wrap
+    }
+
+    .gantt .gr {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      margin: 2px 0
+    }
+
+    .gantt .gr>span {
+      width: 150px;
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis
+    }
+
+    .gt {
+      position: relative;
+      flex: 1;
+      height: 14px;
+      background: #eef1f5;
+      border-radius: 6px
+    }
+
+    .gb {
+      position: absolute;
+      height: 14px;
+      border-radius: 6px
+    }
+
+    .gt b {
+      position: absolute;
+      top: -2px;
+      height: 18px;
+      width: 2px;
+      background: var(--r)
+    }
+
+    .fl {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 10px
+    }
+
+    .chk {
+      cursor: pointer
+    }
+
+    .manual h4 {
+      margin: 14px 0 4px
+    }
+
+    .manual p,
+    .manual li {
+      margin: 3px 0
+    }
+
+    @media(max-width:800px) {
+      body {
+        grid-template-columns: 1fr
+      }
+
+      aside {
+        position: static;
+        height: auto;
+        display: flex;
+        overflow: auto
+      }
+
+      aside h1 {
+        display: none
+      }
+
+      aside a {
+        white-space: nowrap
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <aside id="nav"></aside>
+  <main>
+    <header><input id="gs" placeholder="Search everything… (Enter)" style="min-width:220px"><select
+        id="qa"></select><span class="m" id="lb"></span></header>
+    <div id="banner"></div>
+    <div id="view"></div>
+  </main>
+  <div id="modal"></div>
+  <script>
+    const $ = s => document.querySelector(s), KEY = 'ct_v1', TODAY = () => new Date().toISOString().slice(0, 10);
+    const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+    const PR = ['Critical', 'High', 'Medium', 'Low'], ST = ['Ideation', 'Not started', 'In progress', 'Enhancement', 'Blocked', 'On hold', 'Completed', 'Ongoing', 'Under Validation', 'Cancelled'], ACT = ['In progress', 'Enhancement', 'Blocked', 'Under Validation', 'Ongoing'], CAT = ['Commercial', 'Business Challenge', 'Governance', 'Functional', 'Project Tracking', 'Miscellaneous'], MSS = ['Not Started', 'In Progress', 'Done', 'Blocked'], YN = ['Yes', 'No'];
+    const f = (k, l, req, type, o) => ({ k, l, req, type: type || 'text', o });
+    const S = {
+      init: { t: 'Initiatives', p: 'INI', f: [f('id', 'ID', 0), f('name', 'Name', 1), f('category', 'Category', 0, 'enum', CAT), f('description', 'Description', 0, 'area'), f('objective', 'Business objective', 0, 'area'), f('sponsor', 'Sponsor'), f('priority', 'Priority', 2, 'enum', PR), f('owner', 'Accountable owner (Team ID)', 0, 'ref', 'team'), f('team', 'Team allocation (ID:% , ID:%)'), f('start', 'Planned start', 0, 'date'), f('target', 'Target completion', 0, 'date'), f('status', 'Status', 1, 'enum', ST), f('progress', 'Manual progress % (if no milestones)', 0, 'num'), f('remarks', 'Remarks', 0, 'area'), f('risks', 'Key risks', 0, 'area'), f('deps', 'Dependencies'), f('dev', 'Development done', 0, 'enum', YN), f('test', 'Testing done', 0, 'enum', YN), f('accept', 'Business acceptance', 0, 'enum', YN), f('trained', 'Users trained', 0, 'enum', YN), f('rollout', 'Rollout completed', 0, 'enum', YN), f('adopt', 'Adoption achieved', 0, 'enum', YN), f('evidence', 'Adoption evidence'), f('updated', 'Last update', 0, 'date')] },
+      team: { t: 'Team', p: 'EMP', f: [f('id', 'ID', 1), f('name', 'Name', 1), f('designation', 'Designation'), f('role', 'Role'), f('skills', 'Skills (comma separated)'), f('primary', 'Primary responsibilities'), f('secondary', 'Secondary responsibilities'), f('backlog', 'Estimated backlog (person-days)', 0, 'num')] },
+      ms: { t: 'Schedule', p: 'MS', f: [f('id', 'ID', 1), f('iid', 'Initiative ID', 1, 'ref', 'init'), f('name', 'Activity / milestone', 1), f('pStart', 'Planned start', 0, 'date'), f('pEnd', 'Planned finish', 0, 'date'), f('aStart', 'Actual start', 0, 'date'), f('aEnd', 'Actual finish', 0, 'date'), f('status', 'Status', 1, 'enum', MSS), f('holder', 'Action holder (Team ID)', 0, 'ref', 'team'), f('deps', 'Dependencies'), f('remarks', 'Remarks'), f('link', 'Evidence / deliverable link'), f('gate', 'Validation gate', 0, 'enum', ['Pending', 'Validated', 'Rejected']), f('vdate', 'Validated / rejected on', 0, 'date'), f('vnote', 'Validation note')] },
+      demand: { t: 'Demand', p: 'REQ', f: [f('id', 'ID', 1), f('name', 'Request name', 1), f('description', 'Description', 0, 'area'), f('requester', 'Requester'), f('sponsor', 'Sponsor'), f('value', 'Business value', 0, 'area'), f('urgency', 'Urgency', 0, 'enum', ['Low', 'Medium', 'High']), f('priority', 'Priority', 0, 'enum', PR), f('effort', 'Estimated effort (allocation % points)', 0, 'num'), f('reqDate', 'Requested completion', 0, 'date'), f('deps', 'Dependencies'), f('remarks', 'Remarks'), f('decision', 'Decision', 1, 'enum', ['New', 'Accepted', 'Rejected', 'Deferred', 'Clarification required'])] },
+      act: { t: 'Actions', p: 'ACT', f: [f('id', 'ID', 1), f('iid', 'Initiative ID', 0, 'ref', 'init'), f('type', 'Type', 1, 'enum', ['Decision', 'Approval', 'Blocker', 'Commitment', 'Action']), f('title', 'Title', 1), f('owner', 'Owner (Team ID)', 0, 'ref', 'team'), f('due', 'Due date', 0, 'date'), f('status', 'Status', 1, 'enum', ['Open', 'Done']), f('severity', 'Severity', 0, 'enum', ['Minor', 'Critical']), f('raised', 'Raised on', 0, 'date'), f('remarks', 'Remarks')] }
+    };
+    const MODS = Object.keys(S), TR = { init: ['priority', 'owner', 'target', 'start', 'status', 'team'], ms: ['pEnd', 'status', 'gate'], act: ['status', 'owner', 'due'] };
+    const DEF = () => ({ init: [], team: [], ms: [], demand: [], act: [], hist: [], views: {}, lastBackup: null, cfg: { buffer: 20, stale: 14, blockerDays: 7, soon: 7, backupDays: 7 } });
+    function loadDB() { try { const d = JSON.parse(localStorage.getItem(KEY)); if (d && d.init) return fix(d) } catch (e) { } return DEF() }
+    function fix(d) { const b = DEF(); Object.keys(b).forEach(k => { if (d[k] == null) d[k] = b[k] }); d.cfg = { ...b.cfg, ...d.cfg }; const mp = { 'Active': 'In progress', 'Not Started': 'Not started', 'On Hold': 'On hold', 'Deferred': 'On hold' }; d.init.forEach(i => { if (mp[i.status]) i.status = mp[i.status] }); return d }
+    function save() { try { localStorage.setItem(KEY, JSON.stringify(D)) } catch (e) { alert('Could not save to browser storage: ' + e.message) } }
+    let D = loadDB(), V = 'dash', P = null, F = {}, SC = { ch: [], nw: null }, IMP = null;
+    const nm = id => D.team.find(x => x.id == id)?.name || id || '—', tm = id => D.team.find(x => x.id == id), ini = id => D.init.find(x => x.id == id);
+    const days = (a, b = TODAY()) => Math.round((new Date(a) - new Date(b)) / 864e5), age = a => a.raised ? Math.max(0, days(TODAY(), a.raised)) : 0, pw = x => PR.includes(x) ? 4 - PR.indexOf(x) : 0;
+    const log = (m, id, field, from, to, note) => { D.hist.unshift({ t: new Date().toISOString(), m, id, field, from: from ?? '', to: to ?? '', note: note || '' }); D.hist.length = Math.min(D.hist.length, 2000) };
+    function nextId(m) { const p = S[m].p; let mx = 0; D[m].forEach(r => { const x = String(r.id).match(new RegExp('^' + p + '-(\\d+)$')); if (x) mx = Math.max(mx, +x[1]) }); return p + '-' + String(mx + 1).padStart(3, '0') }
+    const parseAlloc = s => (s || '').split(/[,;]/).map(x => x.trim().split(':')).filter(a => a[0] && a[0].trim()).map(a => [a[0].trim(), +a[1] || 0]);
+    const ld = (id, list = D.init) => list.filter(i => ACT.includes(i.status)).reduce((s, i) => s + (parseAlloc(i.team).find(a => a[0] == id)?.[1] || 0), 0);
+    const avail = () => 100 - D.cfg.buffer, pst = l => l > avail() ? 'Overloaded' : l < avail() * .5 ? 'Underutilised' : 'Balanced';
+    const gate = m => m.status == 'Done' ? (m.gate || 'Pending') : (m.gate == 'Rejected' ? 'Rejected' : ''), fin = m => gate(m) == 'Validated', PV = () => D.ms.filter(m => gate(m) == 'Pending').length;
+    const msst = m => esc(m.status) + (gate(m) ? ` <span class="pill ${gate(m) == 'Validated' ? 'Green' : gate(m) == 'Rejected' ? 'Red' : 'Amber'}">${gate(m) == 'Pending' ? 'Awaiting validation' : gate(m)}</span>` : ''), msb = m => m.status != 'Done' ? btn('msdone', 'ms', m.id, 'Complete') : gate(m) == 'Pending' ? btn('vrev', 'ms', m.id, 'Validate', 'pri') : '';
+    const od = m => m.status != 'Done' && m.pEnd && m.pEnd < TODAY(), msOf = i => D.ms.filter(m => m.iid == i.id);
+    const nextMs = i => msOf(i).filter(m => m.status != 'Done').sort((a, b) => (a.pEnd || '9') > (b.pEnd || '9') ? 1 : -1)[0];
+    function prog(i) { const m = msOf(i); return m.length ? Math.round(m.filter(fin).length / m.length * 100) : +i.progress || 0 }
+    function health(i) {
+      if (!ACT.includes(i.status)) return { h: i.status == 'Completed' ? 'Done' : 'na', w: [] };
+      const w = [], g = [], ms = msOf(i), t = TODAY(), hi = ['Critical', 'High'].includes(i.priority), n = nextMs(i); let r = 0, a = 0;
+      if (!i.owner) g.push('No accountable owner'); if (!i.priority) g.push('No priority'); if (!i.target && i.status != 'Ongoing') g.push('No target date');
+      if (!ms.length) g.push('No milestones'); else if (!n && prog(i) < 100) g.push('No open milestone'); else if (n && !n.holder) g.push('Next milestone has no action holder');
+      ms.filter(od).forEach(m => { hi ? r++ : a++; w.push('Milestone overdue: ' + m.name) });
+      D.act.filter(b => b.iid == i.id && b.type == 'Blocker' && b.status != 'Done').forEach(b => { (b.severity == 'Critical' || age(b) > D.cfg.blockerDays) ? r++ : a++; w.push('Blocker: ' + b.title) });
+      if (i.status == 'Blocked') { r++; w.push('Initiative status is Blocked') }
+      if (i.target && i.target < t && prog(i) < 100) { r++; w.push('Target date passed') }
+      ms.filter(m => m.status == 'Not Started' && m.pEnd >= t && days(m.pEnd) <= D.cfg.soon).forEach(m => { a++; w.push('Due soon, not started: ' + m.name) });
+      if (i.owner && pst(ld(i.owner)) == 'Overloaded') { a++; w.push('Owner is overloaded') }
+      if (r) return { h: 'Red', w }; if (a) return { h: 'Amber', w: w.concat(g) }; if (g.length) return { h: 'Grey', w: g }; return { h: 'Green', w: ['On track'] }
+    }
+    function dq() {
+      const q = [], t = TODAY(); D.init.filter(i => ACT.includes(i.status)).forEach(i => {
+        const n = nextMs(i), c = (x) => q.push(i.id + ' ' + i.name + ': ' + x);
+        if (!i.owner) c('no accountable owner'); if (!i.priority) c('no priority'); if (!i.target && i.status != 'Ongoing') c('no target date'); if (!n && prog(i) < 100) c('no next milestone');
+        if (!i.updated || days(t, i.updated) > D.cfg.stale) c('stale update (>' + D.cfg.stale + ' days)')
+      });
+      D.ms.forEach(m => { if (m.status != 'Done' && !m.holder) q.push(m.id + ' ' + m.name + ': milestone without action holder') });
+      D.act.forEach(a => { if (a.type == 'Blocker' && a.status != 'Done' && !a.owner) q.push(a.id + ' ' + a.title + ': blocker without resolution owner') }); return q
+    }
+    function top5() {
+      const c = [], t = TODAY(), B = D.cfg.blockerDays, under = D.team.filter(p => pst(ld(p.id)) == 'Underutilised');
+      D.init.filter(i => ACT.includes(i.status)).forEach(i => {
+        const h = health(i), n = nextMs(i), hi = pw(i.priority) >= 3;
+        if (h.h == 'Red') c.push({ s: (hi ? 100 : 80) + pw(i.priority), w: `${i.id} ${i.name} is Red`, y: h.w.join('; '), a: n ? `Agree recovery date for "${n.name}"` : 'Define next milestone and recovery plan', o: nm(n?.holder || i.owner), d: n?.pEnd });
+        if (h.h == 'Green' || h.h == 'Amber') {
+          if (i.dev == 'Yes' && i.test == 'Yes' && i.accept == 'Yes' && i.rollout != 'Yes') c.push({ s: 50, w: `${i.name} is ready for rollout`, y: 'Accepted but not rolled out — value not yet delivered', a: 'Schedule rollout and user training', o: nm(i.owner) });
+          else if (i.rollout == 'Yes' && i.adopt != 'Yes') c.push({ s: 45, w: `${i.name}: rolled out, adoption not evidenced`, y: 'Technical completion is not business value', a: 'Capture adoption evidence / drive usage', o: nm(i.owner) });
+          if (under.length && n && prog(i) >= 80) c.push({ s: 40, w: `Quick win: ${i.name} is ${prog(i)}% complete`, y: `${nm(under[0].id)} has spare capacity`, a: `Close "${n.name}" with ${nm(under[0].id)}`, o: nm(under[0].id), d: n.pEnd })
+        }
+      });
+      D.act.filter(a => a.status != 'Done').forEach(a => {
+        const ag = age(a);
+        if (a.type == 'Blocker' && (a.severity == 'Critical' || ag > B)) c.push({ s: 90 + Math.min(ag, 9) / 10, w: `Blocker: ${a.title}`, y: `${a.severity || 'Open'} blocker, ${ag} days old${a.owner ? '' : ', no resolution owner'}`, a: a.owner ? 'Escalate to ' + nm(a.owner) : 'Assign a resolution owner', o: a.owner ? nm(a.owner) : 'You', d: a.due });
+        if ((a.type == 'Decision' || a.type == 'Approval') && a.due && a.due < t) c.push({ s: 85, w: `Overdue ${a.type.toLowerCase()}: ${a.title}`, y: `Due ${a.due} (${-days(a.due)} days late) — may be blocking work`, a: 'Decide or delegate today', o: a.owner ? nm(a.owner) : 'You', d: a.due })
+      });
+      D.ms.filter(m => m.status != 'Done' && ACT.includes(ini(m.iid)?.status) && m.pEnd >= t && days(m.pEnd) <= D.cfg.soon && (m.status == 'Not Started' || !m.holder)).forEach(m => c.push({ s: 70, w: `Milestone "${m.name}" due ${m.pEnd}`, y: m.holder ? 'Due within ' + D.cfg.soon + ' days but not started' : 'Due soon with no action holder', a: m.holder ? 'Confirm delivery with ' + nm(m.holder) : 'Assign an action holder', o: nm(m.holder), d: m.pEnd }));
+      D.team.forEach(p => { const l = ld(p.id); if (pst(l) == 'Overloaded') c.push({ s: 60, w: `${p.name} loaded ${l}% vs ${avail()}% available`, y: 'Overload puts their initiatives at risk', a: under.length ? 'Rebalance towards ' + under.map(u => u.name).join(', ') : 'Defer or re-sequence a lower-priority initiative', o: 'You' }) });
+      const pv = D.ms.filter(m => gate(m) == 'Pending'); if (pv.length) c.push({ s: 88, w: `${pv.length} completed milestone(s) await your validation`, y: 'Developers declared them complete; progress and health count only milestones you validate', a: 'Review evidence, then validate or reject', o: 'You' });
+      return c.sort((a, b) => b.s - a.s).slice(0, 5)
+    }
+    const T = (h, r) => `<div class="tw"><table><thead><tr>${h.map(x => `<th>${x}</th>`).join('')}</tr></thead><tbody>${r.join('') || `<tr><td colspan="${h.length}" class="emp">No records yet</td></tr>`}</tbody></table></div>`;
+    const pill = h => `<span class="pill ${h}">${h == 'na' ? 'n/a' : h}</span>`, cnt = (a, fn) => a.filter(fn).length;
+    const btn = (a, m, id, l, c = '') => `<button class="${c}" data-a="${a}" data-m="${m}" data-id="${esc(id)}">${l}</button>`;
+    function dist(t, vals) { const o = {}; vals.forEach(v => { v = v || '(blank)'; o[v] = (o[v] || 0) + 1 }); const mx = Math.max(1, ...Object.values(o)); return `<div class="card"><h3>${t}</h3>${Object.entries(o).map(([k, v]) => `<div class="dr"><span>${esc(k)}</span><div class="bar2"><i style="width:${v / mx * 100}%"></i></div><b>${v}</b></div>`).join('') || '<span class="m">No data</span>'}</div>` }
+    function gantt(ms) {
+      ms = ms.filter(m => m.pEnd); if (!ms.length) return ''; const a = m => m.pStart || m.pEnd, lo = Math.min(...ms.map(m => +new Date(a(m))), +new Date(TODAY())), hi = Math.max(...ms.map(m => +new Date(m.pEnd)), +new Date(TODAY())), sp = (hi - lo) || 1, p = x => (+new Date(x) - lo) / sp * 100;
+      return '<div class="gantt">' + ms.map(m => { const l = p(a(m)), w = Math.max(p(m.pEnd) - l, 1.5), c = fin(m) ? 'Green' : m.status == 'Done' ? 'Amber' : od(m) ? 'Red' : m.status == 'Blocked' ? 'Amber' : 'Blue'; return `<div class="gr"><span title="${esc(m.name)}">${esc(m.name)}</span><div class="gt"><i class="gb ${c}" style="left:${l}%;width:${w}%"></i><b style="left:${p(TODAY())}%"></b></div></div>` }).join('') + '</div><div class="m">Red line = today</div>'
+    }
+    const cv = (d, r) => d.type == 'ref' ? esc(r[d.k] ? r[d.k] + (d.o == 'team' ? ' · ' + nm(r[d.k]) : '') : '') : esc(r[d.k]);
+    /* ---------- views ---------- */
+    const VIEWS = {
+      dash() {
+        if (!D.init.length && !D.team.length) return `<div class="card"><h3>Welcome — your control tower is empty</h3><p>Two ways to start: (1) go to <b>Data & Backup</b>, download the templates, fill them in and import (order: Team → Initiatives → Schedule → Actions), or (2) add records one by one.</p><div class="bar"><button class="pri" data-a="go" data-id="data">Open Data & Backup</button><button data-a="add" data-m="team">Add team member</button><button data-a="add" data-m="init">Add initiative</button></div></div>`;
+        const I = D.init, ac = I.filter(i => ACT.includes(i.status)), H = ac.map(i => health(i).h), t = TODAY(), lm = D.ms.filter(od), bl = D.act.filter(a => a.type == 'Blocker' && a.status != 'Done'), pd = D.act.filter(a => (a.type == 'Decision' || a.type == 'Approval') && a.status != 'Done'),
+          up = D.ms.filter(m => m.status != 'Done' && m.pEnd >= t && days(m.pEnd) <= 14).sort((a, b) => a.pEnd > b.pEnd ? 1 : -1), q = dq(), T5 = top5();
+        const mo = {}; D.ms.filter(fin).forEach(m => { const k = (m.aEnd || m.pEnd || '').slice(0, 7); if (k) mo[k] = (mo[k] || 0) + 1 }); const mk = Object.keys(mo).sort().slice(-6), mx = Math.max(1, ...mk.map(k => mo[k]));
+        const nd = I.filter(i => i.status != 'Cancelled');
+        const hm = Object.fromEntries(ac.map(i => [i.id, health(i)])), rk = h => ['Red', 'Amber', 'Grey', 'Green'].indexOf(h),
+          board = ac.slice().sort((a, b) => rk(hm[a.id].h) - rk(hm[b.id].h) || pw(b.priority) - pw(a.priority)).map(i => {
+            const n = nextMs(i), na = D.act.filter(a => a.iid == i.id && a.status != 'Done' && a.type != 'Decision').sort((a, b) => (a.due || '9') > (b.due || '9') ? 1 : -1)[0], pv = msOf(i).filter(m => gate(m) == 'Pending').length, p = prog(i);
+            return `<tr><td><a href="#" data-a="ws" data-id="${esc(i.id)}"><b>${esc(i.name)}</b></a><br><span class="m">${esc(i.category || '')}</span></td><td>${esc(i.priority || '—')}</td><td>${esc(nm(i.owner))}</td><td title="${esc(hm[i.id].w.join('; '))}">${pill(hm[i.id].h)}</td><td style="min-width:120px"><div class="dr"><div class="bar2"><i style="width:${p}%"></i></div><b>${p}%</b></div>${pv ? `<span class="m">⏳ ${pv} to validate</span>` : ''}</td><td>${n ? esc(n.name) + '<br><span class="m">' + (n.pEnd || 'no date') + ' · ' + esc(nm(n.holder)) + '</span>' : '<span style="color:var(--r)">none</span>'}</td><td>${na ? esc(na.title) + '<br><span class="m">' + (na.due || 'no date') + ' · ' + esc(nm(na.owner)) + '</span>' : '—'}</td></tr>`
+          }),
+          hold = [].concat(D.ms.filter(m => gate(m) == 'Pending').map(m => ({ k: 0, t: 'Validate', w: m.name + ' — ' + (ini(m.iid)?.name || m.iid), o: nm(m.holder), d: m.aEnd ? 'done ' + m.aEnd : '', b: btn('vrev', 'ms', m.id, 'Review', 'pri') })),
+            bl.map(a => ({ k: 1, t: 'Blocker', w: a.title, o: nm(a.owner), d: age(a) + 'd old', b: btn('edit', 'act', a.id, 'Open') })),
+            pd.map(a => ({ k: a.due && a.due < t ? 0.5 : 2, t: a.type, w: a.title, o: nm(a.owner), d: a.due ? (a.due < t ? 'overdue ' + a.due : 'due ' + a.due) : '', b: btn('edit', 'act', a.id, 'Open') })),
+            lm.filter(m => ACT.includes(ini(m.iid)?.status)).map(m => ({ k: 3, t: 'Late milestone', w: m.name + ' — ' + (ini(m.iid)?.name || ''), o: nm(m.holder), d: 'due ' + m.pEnd, b: btn('edit', 'ms', m.id, 'Open') })),
+            D.demand.filter(x => ['New', 'Clarification required'].includes(x.decision)).map(x => ({ k: 4, t: 'Request', w: x.name, o: x.requester || '', d: x.decision, b: btn('assess', 'demand', x.id, 'Assess') })),
+            ac.filter(i => !i.owner || (!nextMs(i) && prog(i) < 100)).map(i => ({ k: 5, t: 'Setup gap', w: i.name + (i.owner ? '' : ' — no owner') + (nextMs(i) ? '' : ' — no next milestone'), o: 'You', d: '', b: btn('edit', 'init', i.id, 'Fix') }))).sort((a, b) => a.k - b.k).slice(0, 14),
+          wl = [['Stale updates (>' + D.cfg.stale + 'd)', ac.filter(i => !i.updated || days(t, i.updated) > D.cfg.stale)], ['Ready for rollout', ac.filter(i => i.dev == 'Yes' && i.test == 'Yes' && i.accept == 'Yes' && i.rollout != 'Yes')], ['Built, not adopted', nd.filter(i => i.dev == 'Yes' && i.adopt != 'Yes' && i.status != 'Completed')], ['Requests awaiting decision', D.demand.filter(x => ['New', 'Clarification required'].includes(x.decision))]];
+        return `<div class="kpi"><div><b>${I.length}</b><span>Initiatives (${ac.length} in delivery)</span></div><div><b style="color:var(--r)">${cnt(H, h => h == 'Red')}</b><span>Red</span></div><div><b>${lm.length}</b><span>Overdue milestones</span></div><div><b>${bl.length}</b><span>Open blockers</span></div><div><b>${pd.length}</b><span>Pending decisions</span></div><div style="cursor:pointer" data-a="go" data-id="val"><b style="color:var(--a)">${PV()}</b><span>Awaiting my validation</span></div><div><b>${q.length}</b><span>Data-quality flags</span></div></div>
+ <div class="card"><h3>Top 5 Actions for Me</h3>${T5.length ? T5.map((a, i) => `<div class="top"><span class="n">${i + 1}</span><div><p><b>${esc(a.w)}</b></p><p class="m"><b>Why:</b> ${esc(a.y)}</p><p><b>Next:</b> ${esc(a.a)} · <b>Owner:</b> ${esc(a.o)}${a.d ? ' · <b>Due:</b> ' + a.d : ''}</p></div></div>`).join('') : '<p class="m">No exceptions detected from the data entered. Recommendations only appear when supported by records (rules: Red high-priority initiatives, critical/ageing blockers, overdue decisions, milestones due soon, overload, rollout-ready, quick wins).</p>'}</div>
+ <div class="card"><h3>Initiative progress board <span class="m">(in delivery · worst health first · progress = validated milestones)</span></h3>${T(['Initiative', 'Priority', 'Owner', 'Health', 'Progress', 'Next milestone', 'Next action'], board)}</div>
+ <div class="grid"><div class="card"><h3>Hold points — where I am needed</h3>${T(['Type', 'Item', 'Owner', 'When', ''], hold.map(h => `<tr><td>${h.t}</td><td>${esc(h.w)}</td><td>${esc(h.o)}</td><td>${h.d}</td><td>${h.b}</td></tr>`))}</div>
+ <div class="card"><h3>Priority × health</h3>${T(['', 'Red', 'Amber', 'Grey', 'Green'], PR.map(p => `<tr><td>${p}</td>${['Red', 'Amber', 'Grey', 'Green'].map(h => `<td>${cnt(ac, i => i.priority == p && hm[i.id].h == h) || ''}</td>`).join('')}</tr>`))}<h3 style="margin-top:12px">Watchlist</h3>${wl.map(([l, a]) => `<div><b>${a.length}</b> ${l}${a.length ? `<br><span class="m">${esc(a.slice(0, 4).map(x => x.name).join(', '))}${a.length > 4 ? '…' : ''}</span>` : ''}</div>`).join('')}</div></div>
+ <div class="grid">${dist('By priority', I.map(i => i.priority))}${dist('By status', I.map(i => i.status))}${dist('By category', I.map(i => i.category))}${dist('Health (active)', H)}</div>
+ <div class="grid"><div class="card"><h3>Team capacity (buffer ${D.cfg.buffer}%)</h3>${D.team.length ? D.team.map(p => { const l = ld(p.id), s = pst(l); return `<div class="dr"><span>${esc(p.name)}</span><div class="bar2"><i style="width:${Math.min(l, 100)}%;background:var(${s == 'Overloaded' ? '--r' : s == 'Underutilised' ? '--a' : '--g'})"></i></div><b>${l}%</b><span style="width:60px;text-align:right">${cnt(D.act, a => a.owner == p.id && a.status != 'Done')} open</span></div>` }).join('') : '<span class="m">No team yet</span>'}</div>
+ <div class="card"><h3>Technical completion vs adoption</h3>${[['Development done', 'dev'], ['Business accepted', 'accept'], ['Rolled out', 'rollout'], ['Adoption achieved', 'adopt']].map(([l, k]) => { const n = cnt(nd, i => i[k] == 'Yes'); return `<div class="dr"><span>${l}</span><div class="bar2"><i style="width:${nd.length ? n / nd.length * 100 : 0}%"></i></div><b>${n}</b></div>` }).join('')}</div>
+ <div class="card"><h3>Milestones completed (by month)</h3>${mk.map(k => `<div class="dr"><span>${k}</span><div class="bar2"><i style="width:${mo[k] / mx * 100}%;background:var(--g)"></i></div><b>${mo[k]}</b></div>`).join('') || '<span class="m">None completed yet</span>'}</div></div>
+ <div class="grid"><div class="card"><h3>Upcoming milestones (14 days)</h3>${T(['Milestone', 'Initiative', 'Due', 'Holder'], up.map(m => `<tr><td>${esc(m.name)}</td><td>${esc(ini(m.iid)?.name || m.iid)}</td><td>${m.pEnd}</td><td>${esc(nm(m.holder))}</td></tr>`))}</div>
+ <div class="card"><h3>Blockers & pending decisions</h3>${T(['Item', 'Type', 'Age/Due'], bl.concat(pd).map(a => `<tr class="${a.due && a.due < t ? 'late' : ''}"><td>${esc(a.title)}</td><td>${a.type}</td><td>${a.type == 'Blocker' ? age(a) + 'd' : a.due}</td></tr>`))}</div></div>
+ ${q.length ? `<div class="card"><h3>Data quality flags</h3>${q.slice(0, 12).map(x => '<div>• ' + esc(x) + '</div>').join('')}${q.length > 12 ? `<div class="m">+${q.length - 12} more</div>` : ''}</div>` : ''}`
+      },
+      init() {
+        const R = D.init.filter(i => { const h = health(i).h, q = (F.q || '').toLowerCase(); return (!F.priority || i.priority == F.priority) && (!F.owner || i.owner == F.owner) && (!F.category || i.category == F.category) && (!F.status || i.status == F.status) && (!F.health || h == F.health) && (!q || JSON.stringify(i).toLowerCase().includes(q)) });
+        const so = F.sort || 'priority'; R.sort((a, b) => so == 'priority' ? pw(b.priority) - pw(a.priority) : so == 'target' ? (a.target || '9') > (b.target || '9') ? 1 : -1 : so == 'health' ? ['Red', 'Amber', 'Grey', 'Green'].indexOf(health(a).h) - ['Red', 'Amber', 'Grey', 'Green'].indexOf(health(b).h) : a.name > b.name ? 1 : -1);
+        const sel = (k, l, o) => `<select data-f="${k}"><option value="">${l}</option>${o.map(x => { const v = Array.isArray(x) ? x[0] : x, t = Array.isArray(x) ? x[1] : x; return `<option value="${esc(v)}" ${F[k] == v ? 'selected' : ''}>${esc(t)}</option>` }).join('')}</select>`;
+        const cats = CAT;
+        return `<div class="fl"><input data-f="q" placeholder="Filter text" value="${esc(F.q || '')}">${sel('priority', 'Priority', PR)}${sel('owner', 'Owner', D.team.map(p => [p.id, p.name]))}${sel('category', 'Category', cats)}${sel('status', 'Status', ST)}${sel('health', 'Health', ['Green', 'Amber', 'Red', 'Grey'])}${sel('sort', 'Sort: priority', [['target', 'Sort: target'], ['health', 'Sort: health'], ['name', 'Sort: name']])}
+ <select data-f="view"><option value="">Saved views…</option>${Object.keys(D.views).map(v => `<option ${F.view == v ? 'selected' : ''}>${esc(v)}</option>`).join('')}</select><button data-a="saveview">Save view</button><button data-a="delview">Delete view</button><button class="pri" data-a="add" data-m="init">+ Initiative</button></div>
+ ${T(['ID', 'Name', 'Priority', 'Owner', 'Status', 'Health', 'Progress', 'Next milestone', 'Target', ''], R.map(i => { const h = health(i), n = nextMs(i); return `<tr><td>${esc(i.id)}</td><td><a href="#" data-a="ws" data-id="${esc(i.id)}"><b>${esc(i.name)}</b></a></td><td>${esc(i.priority)}</td><td>${esc(nm(i.owner))}</td><td>${esc(i.status)}</td><td title="${esc(h.w.join('; '))}">${pill(h.h)}</td><td>${prog(i)}%</td><td>${n ? esc(n.name) + ' (' + (n.pEnd || '?') + ')' : '—'}</td><td>${i.target || '—'}</td><td>${btn('edit', 'init', i.id, 'Edit')}${btn('del', 'init', i.id, 'Del', 'dng')}</td></tr>` }))}`
+      },
+      ws() {
+        const i = ini(P); if (!i) return '<p>Initiative not found.</p>'; const h = health(i), ms = msOf(i).sort((a, b) => (a.pEnd || '') > (b.pEnd || '') ? 1 : -1), ac = D.act.filter(a => a.iid == i.id), n = nextMs(i);
+        return `<div class="bar"><button data-a="go" data-id="init">← Portfolio</button>${btn('edit', 'init', i.id, 'Edit initiative', 'pri')}<button data-a="sched" data-id="${esc(i.id)}">Filtered schedule</button></div>
+ <div class="card"><h2 style="margin:0">${esc(i.id)} · ${esc(i.name)} ${pill(h.h)}</h2><p class="m">${esc(i.category)} · ${esc(i.priority || 'No priority')} · ${i.status} · Sponsor: ${esc(i.sponsor || '—')} · Owner: <b>${esc(nm(i.owner))}</b> · ${i.start || '?'} → ${i.target || '?'} · Progress ${prog(i)}%</p><p>${esc(i.description)}</p><p><b>Objective:</b> ${esc(i.objective || '—')}</p><p><b>Health reasons:</b> ${esc(h.w.join('; ') || '—')}</p><p><b>Next milestone:</b> ${n ? esc(n.name) + ' · ' + n.pEnd + ' · ' + esc(nm(n.holder)) : '<span style="color:var(--r)">None defined</span>'}</p></div>
+ <div class="grid"><div class="card"><h3>People & allocation</h3>${parseAlloc(i.team).map(([id, p]) => `<div>${esc(nm(id))} — ${p}%</div>`).join('') || '<span class="m">None</span>'}</div><div class="card"><h3>Risks & dependencies</h3><p>${esc(i.risks || '—')}</p><p>${esc(i.deps || '—')}</p><p class="m">${esc(i.remarks)}</p></div>
+ <div class="card"><h3>Adoption</h3>${[['Development', 'dev'], ['Testing', 'test'], ['Business acceptance', 'accept'], ['Users trained', 'trained'], ['Rollout', 'rollout'], ['Adoption', 'adopt']].map(([l, k]) => `<div>${i[k] == 'Yes' ? '✅' : '⬜'} ${l}</div>`).join('')}<div class="m">${esc(i.evidence)}</div></div></div>
+ <div class="card"><h3>Schedule ${btn('add', 'ms', '', '+ Milestone', 'pri')}</h3>${gantt(ms)}${T(['ID', 'Milestone', 'Planned', 'Status', 'Holder', ''], ms.map(m => `<tr class="${od(m) ? 'late' : ''}"><td>${esc(m.id)}</td><td>${esc(m.name)}</td><td>${m.pStart || ''} → ${m.pEnd || ''}</td><td>${msst(m)}</td><td>${esc(nm(m.holder))}</td><td>${msb(m)}${btn('edit', 'ms', m.id, 'Edit')}</td></tr>`))}</div>
+ <div class="card"><h3>Actions, blockers & decisions ${btn('add', 'act', '', '+ Action', 'pri')}</h3>${T(['ID', 'Type', 'Title', 'Owner', 'Due', 'Status', ''], ac.map(a => `<tr class="${a.status != 'Done' && a.due && a.due < TODAY() ? 'late' : ''}"><td>${a.id}</td><td>${a.type}</td><td>${esc(a.title)}</td><td>${esc(nm(a.owner))}</td><td>${a.due}</td><td>${a.status}</td><td>${btn('edit', 'act', a.id, 'Edit')}</td></tr>`))}</div>
+ <div class="card"><h3>Change history</h3>${T(['When', 'Field', 'From', 'To'], D.hist.filter(x => x.id == i.id).slice(0, 30).map(x => `<tr><td>${x.t.slice(0, 16).replace('T', ' ')}</td><td>${esc(x.field)}</td><td>${esc(x.from)}</td><td>${esc(x.to)}</td></tr>`))}</div>`
+      },
+      sched() {
+        const R = D.ms.filter(m => !P || m.iid == P).sort((a, b) => (a.pEnd || '') > (b.pEnd || '') ? 1 : -1);
+        return `<div class="fl"><select data-f="sp"><option value="">All initiatives</option>${D.init.map(i => `<option value="${esc(i.id)}" ${P == i.id ? 'selected' : ''}>${esc(i.name)}</option>`).join('')}</select><button class="pri" data-a="add" data-m="ms">+ Milestone</button></div><div class="card">${gantt(R) || '<span class="m">Gantt appears once milestones have finish dates.</span>'}</div>
+ <div class="card">${T(['ID', 'Initiative', 'Milestone', 'Planned', 'Actual', 'Status', 'Holder', 'Link', ''], R.map(m => `<tr class="${od(m) ? 'late' : ''}"><td>${m.id}</td><td>${esc(ini(m.iid)?.name || m.iid)}</td><td>${esc(m.name)}</td><td>${m.pStart || ''} → ${m.pEnd}</td><td>${m.aStart || ''} ${m.aEnd ? '→ ' + m.aEnd : ''}</td><td>${msst(m)}</td><td>${esc(nm(m.holder))}</td><td>${m.link ? `<a href="${esc(m.link)}" target="_blank" rel="noopener">open</a>` : ''}</td><td>${msb(m)}${btn('edit', 'ms', m.id, 'Edit')}${btn('del', 'ms', m.id, 'Del', 'dng')}</td></tr>`))}</div>`
+      },
+      team() {
+        const sk = (F.skill || '').toLowerCase(), R = D.team.filter(p => !sk || (p.skills || '').toLowerCase().includes(sk));
+        return `<div class="fl"><input data-f="skill" placeholder="Find by skill (shows spare capacity)" value="${esc(F.skill || '')}"><button class="pri" data-a="add" data-m="team">+ Team member</button><span class="m">Usable capacity = ${avail()}% (buffer ${D.cfg.buffer}% for unplanned work)</span></div>
+ <div class="card">${T(['ID', 'Name', 'Role', 'Skills', 'Allocated', 'Free', 'Status', 'Initiatives', 'Open actions', 'Backlog (pd)', ''], R.map(p => { const l = ld(p.id), s = pst(l), ins = D.init.filter(i => ACT.includes(i.status) && parseAlloc(i.team).some(a => a[0] == p.id)).map(i => i.name); return `<tr><td>${p.id}</td><td><b>${esc(p.name)}</b><br><span class="m">${esc(p.designation)}</span></td><td>${esc(p.role)}</td><td>${esc(p.skills)}</td><td>${l}%</td><td>${Math.max(0, avail() - l)}%</td><td>${pill(s)}</td><td>${esc(ins.join(', '))}</td><td>${cnt(D.act, a => a.owner == p.id && a.status != 'Done')}</td><td>${p.backlog || ''}</td><td>${btn('edit', 'team', p.id, 'Edit')}${btn('del', 'team', p.id, 'Del', 'dng')}</td></tr>` }))}</div>`
+      },
+      wi() {
+        const sim = simList(), cur = D.team, fi = (F.wf || 'priority'), opt = fi == 'priority' ? PR : fi == 'status' ? ST : null;
+        const fld = opt ? `<select id="wv">${opt.map(o => `<option>${o}</option>`).join('')}</select>` : `<input id="wv" ${fi == 'target' ? 'type="date"' : ''} placeholder="${fi == 'team' ? 'T1:30,T2:20' : ''}">`;
+        const ov = D.team.filter(p => pst(ld(p.id, sim)) == 'Overloaded');
+        return `<div class="card"><h3>Scenario builder (live portfolio is never changed until you apply)</h3><div class="fl"><select id="wi">${D.init.map(i => `<option value="${esc(i.id)}">${esc(i.id + ' ' + i.name)}</option>`).join('')}</select><select data-f="wf">${['priority', 'target', 'status', 'team'].map(x => `<option ${fi == x ? 'selected' : ''} value="${x}">${{ priority: 'Change priority', target: 'Change target date', status: 'Change status (defer / pause / cancel)', team: 'Reassign / change allocation' }[x]}</option>`).join('')}</select>${fld}<button class="pri" data-a="addch">Add change</button></div>
+ <div class="fl"><b>Add new initiative:</b><input id="nn" placeholder="Name"><select id="np">${PR.map(p => `<option>${p}</option>`).join('')}</select><input id="nt" placeholder="Allocation e.g. ${D.team[0]?.id || 'EMP-001'}:30"><input id="nd" type="date"><button data-a="addnew">Add to scenario</button></div></div>
+ <div class="card"><h3>Changes in scenario (${SC.ch.length + (SC.nw ? 1 : 0)})</h3>${SC.ch.map((c, k) => `<div>${esc(c.id)} · ${c.k} → <b>${esc(c.v)}</b> <button data-a="rmch" data-id="${k}">×</button></div>`).join('')}${SC.nw ? `<div>NEW: ${esc(SC.nw.name)} (${SC.nw.priority}) alloc ${esc(SC.nw.team)} <button data-a="rmnew">×</button></div>` : ''}${SC.ch.length || SC.nw ? '' : '<span class="m">No changes yet</span>'}</div>
+ <div class="card"><h3>Impact</h3>${T(['Person', 'Now', 'Scenario', 'Status now → scenario'], cur.map(p => { const a = ld(p.id), b = ld(p.id, sim); return `<tr><td>${esc(p.name)}</td><td>${a}%</td><td>${b}%</td><td>${pst(a)} → <b>${pst(b)}</b></td></tr>` }))}
+ ${scWarn(sim).map(x => `<div>⚠ ${esc(x)}</div>`).join('') || (SC.ch.length || SC.nw ? `<div>No new conflicts detected${ov.length ? '' : ''}.</div>` : '')}
+ <div class="bar"><button class="pri" data-a="applysc">Apply scenario…</button><button data-a="clearsc">Discard scenario</button></div></div>`},
+      demand() { return `<div class="fl"><button class="pri" data-a="add" data-m="demand">+ Request</button></div><div class="card">${T(['ID', 'Request', 'Requester', 'Priority', 'Effort %', 'Requested', 'Decision', ''], D.demand.map(d => `<tr><td>${d.id}</td><td><b>${esc(d.name)}</b></td><td>${esc(d.requester)}</td><td>${esc(d.priority)}</td><td>${d.effort || ''}</td><td>${d.reqDate || ''}</td><td>${esc(d.decision)}</td><td>${btn('assess', 'demand', d.id, 'Assess & decide', 'pri')}${btn('edit', 'demand', d.id, 'Edit')}${btn('del', 'demand', d.id, 'Del', 'dng')}</td></tr>`))}</div>` },
+      act() {
+        const R = D.act.filter(a => (!F.at || a.type == F.at) && (!F.as || a.status == F.as)).sort((a, b) => (a.due || '9') > (b.due || '9') ? 1 : -1);
+        return `<div class="fl"><select data-f="at"><option value="">All types</option>${['Decision', 'Approval', 'Blocker', 'Commitment', 'Action'].map(x => `<option ${F.at == x ? 'selected' : ''}>${x}</option>`).join('')}</select><select data-f="as"><option value="">Any status</option><option ${F.as == 'Open' ? 'selected' : ''}>Open</option><option ${F.as == 'Done' ? 'selected' : ''}>Done</option></select><button class="pri" data-a="add" data-m="act">+ Action / decision / blocker</button></div><div class="card">${T(['ID', 'Type', 'Title', 'Initiative', 'Owner', 'Due', 'Age', 'Status', ''], R.map(a => `<tr class="${a.status != 'Done' && a.due && a.due < TODAY() ? 'late' : ''}"><td>${a.id}</td><td>${a.type}${a.severity == 'Critical' ? ' 🔴' : ''}</td><td>${esc(a.title)}</td><td>${esc(ini(a.iid)?.name || '')}</td><td>${esc(nm(a.owner))}</td><td>${a.due}</td><td>${a.raised ? age(a) + 'd' : ''}</td><td>${a.status}</td><td>${a.status != 'Done' ? btn('done', 'act', a.id, 'Done') : ''}${btn('edit', 'act', a.id, 'Edit')}${btn('del', 'act', a.id, 'Del', 'dng')}</td></tr>`))}</div>`
+      },
+      adopt() {
+        const K = [['Dev', 'dev'], ['Test', 'test'], ['Accepted', 'accept'], ['Trained', 'trained'], ['Rollout', 'rollout'], ['Adopted', 'adopt']];
+        return `<div class="card"><p class="m">Click a stage to toggle. Technical completion without adoption is flagged: value is not delivered until users adopt.</p>${T(['Initiative', 'Status', ...K.map(k => k[0]), 'Evidence', 'Flag'], D.init.filter(i => i.status != 'Cancelled').map(i => `<tr><td><b>${esc(i.name)}</b></td><td>${i.status}</td>${K.map(([l, k]) => `<td><span class="chk" data-a="tog" data-id="${esc(i.id)}" data-k="${k}">${i[k] == 'Yes' ? '✅' : '⬜'}</span></td>`).join('')}<td>${esc(i.evidence)}</td><td>${i.dev == 'Yes' && i.adopt != 'Yes' ? '<span class="pill Amber">Built, not adopted</span>' : ''}</td></tr>`))}</div>`
+      },
+      data() {
+        const c = D.cfg; return `<div class="card"><h3>Backup & restore</h3><p>Data lives in <b>this browser only</b> (Local Storage). Clearing browser data, using another browser/profile, or a private window will not show — or may erase — it. Last backup: <b>${D.lastBackup || 'never'}</b>.</p><div class="bar"><button class="pri" data-a="backup">Download JSON backup</button><label class="pri" style="padding:6px 10px;border-radius:8px;background:#fff;border:1px solid #d5dbe4;cursor:pointer">Restore from JSON<input type="file" id="rf" accept=".json" hidden></label><button class="dng" data-a="reset">Delete all data…</button></div></div>
+ <div class="card"><h3>1. Templates (Excel / CSV)</h3><p class="m">Sample rows have IDs starting EXAMPLE and are ignored on import. Required fields are listed in the Instructions sheet (Excel). Import order: Team → Initiatives → Schedule → Actions; Demand any time. Relationships use IDs.</p>${MODS.map(m => `<div class="fl"><b style="width:110px">${S[m].t}</b><button data-a="tpl" data-m="${m}" data-id="xlsx">Template .xlsx</button><button data-a="tpl" data-m="${m}" data-id="csv">Template .csv</button><button data-a="exp" data-m="${m}" data-id="xlsx">Export .xlsx</button><button data-a="exp" data-m="${m}" data-id="csv">Export .csv</button><button data-a="exp" data-m="${m}" data-id="json">Export .json</button></div>`).join('')}<div class="bar"><button data-a="exp" data-m="all" data-id="xlsx">Export everything .xlsx</button><button data-a="exp" data-m="all" data-id="json">Export everything .json</button></div><p class="m">Excel needs the SheetJS library (loaded from the internet on first use${window.XLSX ? ' — loaded ✓' : ' — not loaded ✗'}); CSV and JSON work fully offline.</p></div>
+ <div class="card"><h3>2. Import</h3><div class="fl"><select data-f="im">${MODS.map(m => `<option value="${m}" ${F.im == m ? 'selected' : ''}>${S[m].t}</option>`).join('')}</select><select data-f="imode"><option value="add">Add new only (existing IDs rejected)</option><option value="upd" ${F.imode == 'upd' ? 'selected' : ''}>Add new + update existing (non-empty cells)</option></select><input type="file" id="fi" accept=".xlsx,.xls,.csv,.json"></div>${impView()}</div>
+ <div class="card"><h3>Settings</h3><div class="fl">${[['buffer', 'Capacity buffer %'], ['stale', 'Stale update (days)'], ['blockerDays', 'Escalate blocker after (days)'], ['soon', 'Milestone "soon" (days)'], ['backupDays', 'Backup reminder (days)']].map(([k, l]) => `<label class="m">${l}<br><input type="number" data-c="${k}" value="${c[k]}" style="width:110px"></label>`).join('')}</div></div>
+ <div class="card"><h3>Change history (latest 40)</h3>${T(['When', 'Module', 'ID', 'Field', 'From', 'To', 'Note'], D.hist.slice(0, 40).map(x => `<tr><td>${x.t.slice(0, 16).replace('T', ' ')}</td><td>${x.m}</td><td>${esc(x.id)}</td><td>${esc(x.field)}</td><td>${esc(x.from)}</td><td>${esc(x.to)}</td><td>${esc(x.note)}</td></tr>`))}</div>`
+      },
+      val() {
+        const pn = D.ms.filter(m => gate(m) == 'Pending').sort((a, b) => (a.aEnd || '') > (b.aEnd || '') ? 1 : -1), rc = D.ms.filter(m => m.vdate && ['Validated', 'Rejected'].includes(m.gate)).sort((a, b) => a.vdate < b.vdate ? 1 : -1).slice(0, 15);
+        return `<div class="card"><h3>Awaiting my validation (${pn.length})</h3><p class="m">Developers declare a milestone complete; it counts towards progress only after you validate it. Rejecting sends it back to In progress.</p>${T(['Milestone', 'Initiative', 'Developer', 'Declared complete', 'Waiting', 'Evidence', ''], pn.map(m => `<tr><td><b>${esc(m.name)}</b></td><td>${esc(ini(m.iid)?.name || m.iid)}</td><td>${esc(nm(m.holder))}</td><td>${m.aEnd || '—'}</td><td>${m.aEnd ? days(TODAY(), m.aEnd) + 'd' : ''}</td><td>${m.link ? `<a href="${esc(m.link)}" target="_blank" rel="noopener">open</a>` : '<span style="color:var(--r)">none</span>'}</td><td>${btn('vrev', 'ms', m.id, 'Review', 'pri')}</td></tr>`))}</div>
+ <div class="card"><h3>Recent decisions</h3>${T(['Milestone', 'Initiative', 'Decision', 'On', 'Note'], rc.map(m => `<tr><td>${esc(m.name)}</td><td>${esc(ini(m.iid)?.name || m.iid)}</td><td><span class="pill ${m.gate == 'Validated' ? 'Green' : 'Red'}">${m.gate}</span></td><td>${m.vdate}</td><td>${esc(m.vnote)}</td></tr>`))}</div>`
+      },
+      search() { const q = (P || '').toLowerCase(), r = []; MODS.forEach(m => D[m].forEach(x => { if (JSON.stringify(x).toLowerCase().includes(q)) r.push(`<tr><td>${S[m].t}</td><td>${esc(x.id)}</td><td>${esc(x.name || x.title)}</td><td>${btn('edit', m, x.id, 'Open')}</td></tr>`) })); return `<div class="card"><h3>Search: ${esc(P)}</h3>${T(['Module', 'ID', 'Name', ''], r)}</div>` },
+      man() {
+        return `<div class="card manual"><h2>User manual</h2>
+<h4>Purpose</h4><p><b>Action Centre</b>: weekly review page with rule-based Top 5 actions. <b>Portfolio</b>: initiatives; click one for its workspace. <b>Schedule</b>: milestones, Gantt. <b>Team & Capacity</b>: allocation vs usable capacity. <b>What-if</b>: sandbox. <b>Demand</b>: incoming requests. <b>Actions</b>: decisions, approvals, blockers, commitments. <b>Adoption</b>: dev → test → acceptance → training → rollout → adoption.</p>
+<h4>Adding and updating</h4><p>Use “+” buttons or Quick add (top). IDs are generated; they must stay unique. Edit/Del per row. Important changes (priority, owner, dates, status, allocation) are logged in Change history.</p>
+<h4>Initiatives & milestones</h4><p>Initiatives in delivery (In progress, Enhancement, Blocked, Under Validation, Ongoing) should have an owner, priority, target date and at least one milestone with an action holder; owner and target are not mandatory on save but are flagged in health and data-quality checks. Progress is calculated from completed milestones (manual % used if none).</p>
+<h4>Allocation</h4><p>Initiative field “Team allocation” uses ID:% pairs, e.g. EMP-001:40,EMP-002:20. Only initiatives in delivery count (In progress, Enhancement, Blocked, Under Validation, Ongoing). Usable capacity = 100% − buffer. Overloaded: above usable; Underutilised: below half of usable.</p>
+<h4>Health rules</h4><p><span class="pill Red">Red</span> overdue milestone on Critical/High, critical or ageing blocker, or passed target. <span class="pill Amber">Amber</span> other overdue items, minor blockers, milestones due soon not started, overloaded owner. <span class="pill Grey">Grey</span> missing information (never shown as Green). <span class="pill Green">Green</span> no issues and info complete. Thresholds are in Data & Backup → Settings.</p>
+<h4>Validation gate</h4><p>Mark a milestone Complete (or set it to Done) when the developer declares it finished. It appears under Validation Gate and counts towards progress only after you tick the four checks and validate it; rejecting returns it to In progress with your note. Every decision is logged.</p><h4>What-if</h4><p>Add changes, review impact, then Apply (summary + confirmation). Nothing changes live until then.</p>
+<h4>Requests</h4><p>Click “Assess & decide” to see impact on capacity and which lower-priority commitments would have to move. Accepting creates a draft initiative.</p>
+<h4>Import / export / backup</h4><p>Download a template, fill it, choose module and mode, review the preview (invalid rows listed with reasons), then commit. Existing IDs are never overwritten in Add-only mode. Download a JSON backup regularly; restore replaces everything after confirmation.</p></div>`}
+    };
+    /* ---------- scenario ---------- */
+    function simList() { const s = JSON.parse(JSON.stringify(D.init)); SC.ch.forEach(c => { const i = s.find(x => x.id == c.id); if (i) i[c.k] = c.v }); if (SC.nw) s.push({ ...SC.nw, id: 'NEW', status: 'In progress' }); return s }
+    function scWarn(sim) {
+      const w = []; SC.ch.forEach(c => {
+        const i = ini(c.id); if (c.k == 'target') D.ms.filter(m => m.iid == c.id && m.status != 'Done' && m.pEnd > c.v).forEach(m => w.push(`${i.name}: milestone "${m.name}" (${m.pEnd}) falls after new target ${c.v}`));
+        if (c.k == 'status' && !ACT.includes(c.v) && pw(i.priority) >= 3) w.push(`${i.name} is ${i.priority} priority — pausing it is a commitment change`);
+        if (c.k == 'priority') { const o = D.init.filter(x => ACT.includes(x.status) && x.id != c.id && x.priority == c.v && x.owner && x.owner == i.owner); if (o.length) w.push(`${nm(i.owner)} would own ${o.length + 1} ${c.v} initiatives`) }
+      });
+      D.team.forEach(p => { if (pst(ld(p.id, sim)) == 'Overloaded' && pst(ld(p.id)) != 'Overloaded') w.push(`${p.name} becomes overloaded (${ld(p.id, sim)}%)`) });
+      if (SC.nw) parseAlloc(SC.nw.team).forEach(([id]) => { if (!tm(id)) w.push('Unknown team ID in new initiative: ' + id) }); return w
+    }
+    /* ---------- forms / validation ---------- */
+    const MN = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
+    function iso(y, m, d) { y = +y; m = +m; d = +d; if (y < 100) y += 2000; const t = new Date(Date.UTC(y, m - 1, d)); return t.getUTCFullYear() == y && t.getUTCMonth() == m - 1 && t.getUTCDate() == d ? `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}` : null }
+    function pdate(v) {
+      v = String(v).trim(); let x, m;
+      if (/^\d{5}$/.test(v) && +v > 20000 && +v < 80000) return new Date(Math.round((+v - 25569) * 864e5)).toISOString().slice(0, 10);
+      if (x = v.match(/^(\d{4})[-\/. ](\d{1,2})[-\/. ](\d{1,2})(?:[T ].*)?$/)) return iso(x[1], x[2], x[3]);
+      if (x = v.match(/^(\d{1,2})[-\/. ](\d{1,2})[-\/. ](\d{2,4})$/)) { let a = +x[1], b = +x[2]; if (b > 12 && a <= 12) { const q = a; a = b; b = q } return iso(x[3], b, a) }
+      if (x = v.match(/^(\d{1,2})(?:st|nd|rd|th)?[-\/. ]*([A-Za-z]{3,9})\.?,?[-\/. ]*(\d{2,4})$/)) { m = MN.indexOf(x[2].slice(0, 3).toLowerCase()); return m < 0 ? null : iso(x[3], m + 1, x[1]) }
+      if (x = v.match(/^([A-Za-z]{3,9})\.?[-\/. ]*(\d{1,2})(?:st|nd|rd|th)?,?[-\/. ]*(\d{2,4})$/)) { m = MN.indexOf(x[1].slice(0, 3).toLowerCase()); return m < 0 ? null : iso(x[3], m + 1, x[2]) }
+      return null
+    }
+    function nrm(m, x) {
+      const r = {}, mp = {}; S[m].f.forEach(d => { mp[d.k.toLowerCase()] = d; mp[d.l.toLowerCase().replace(/[*\s]/g, '')] = d }); Object.keys(x).forEach(k => { const d = mp[k.toLowerCase().replace(/[*\s]/g, '').replace(/^\ufeff/, '')]; if (d) r[d.k] = x[k] });
+      S[m].f.forEach(d => { let v = r[d.k]; v = v == null ? '' : String(v).trim(); if (d.type == 'enum' && v) { if (d.o === YN) { if (/^(y|true|1)$/i.test(v)) v = 'Yes'; else if (/^(n|false|0)$/i.test(v)) v = 'No' } const o = d.o.find(e => e.toLowerCase() == v.toLowerCase()); if (o) v = o } if (d.type == 'date' && v) { const pd = pdate(v); if (pd) v = pd } r[d.k] = v }); return r
+    }
+    function vrec(m, r) {
+      const e = [], s = S[m]; s.f.forEach(d => {
+        const v = r[d.k], q = d.req == 1 || (d.req == 2 && ACT.includes(r.status) && !(d.k == 'target' && r.status == 'Ongoing')); if (q && !v) e.push(d.l + ' is required');
+        if (v && d.type == 'enum' && !d.o.includes(v)) e.push(`${d.l}: "${v}" not allowed (${d.o.join('/')})`);
+        if (v && d.type == 'date' && !(/^\d{4}-\d\d-\d\d$/.test(v) && !isNaN(new Date(v)))) e.push(`${d.l}: "${v}" is not a valid date`);
+        if (v && d.type == 'num' && isNaN(+v)) e.push(`${d.l}: "${v}" is not a number`);
+        if (v && d.type == 'ref' && !D[d.o].some(x => x.id == v)) e.push(`${d.l}: unknown ID "${v}"`)
+      });
+      if (m == 'init') { parseAlloc(r.team).forEach(([id]) => { if (!tm(id)) e.push('Allocation: unknown team ID ' + id) }); if (r.start && r.target && r.start > r.target) e.push('Start is after target') } return e
+    }
+    function form(m, id, pre = {}) {
+      const s = S[m], r = id ? { ...D[m].find(x => x.id == id) } : { id: nextId(m), ...(m == 'demand' ? { decision: 'New' } : {}), ...(m == 'ms' ? { status: 'Not Started' } : {}), ...(m == 'act' ? { status: 'Open', raised: TODAY() } : {}), ...(m == 'init' ? { status: 'In progress' } : {}), ...pre };
+      modal(`<h3>${id ? 'Edit' : 'Add'} ${s.t}</h3><form id="fm" data-m="${m}" data-old="${esc(id || '')}">` + s.f.map(d => {
+        const v = r[d.k] ?? ''; let i;
+        if (d.type == 'area') i = `<textarea name="${d.k}">${esc(v)}</textarea>`;
+        else if (d.type == 'enum' || d.type == 'ref') { const o = d.type == 'enum' ? d.o : D[d.o].map(x => x.id); i = `<select name="${d.k}"><option value="">—</option>${o.map(x => `<option value="${esc(x)}" ${x == v ? 'selected' : ''}>${esc(d.type == 'ref' && d.o == 'team' ? x + ' · ' + nm(x) : d.type == 'ref' ? x + ' · ' + ini(x).name : x)}</option>`).join('')}</select>` }
+        else i = `<input name="${d.k}" type="${d.type == 'date' ? 'date' : d.type == 'num' ? 'number' : 'text'}" value="${esc(v)}" ${d.k == 'id' && id ? 'readonly' : m == 'init' && d.k == 'id' ? 'placeholder="blank = auto-generate"' : ''}>`;
+        return `<label>${d.l}${d.req == 1 ? ' *' : d.req == 2 ? ' * (in delivery)' : ''}${i}</label>`
+      }).join('') + `<div class="bar"><button class="pri" type="submit">Save</button><button type="button" data-a="close">Cancel</button></div></form>`)
+    }
+    function submitForm(fm) {
+      const m = fm.dataset.m, old = fm.dataset.old, fd = new FormData(fm), raw = {}; S[m].f.forEach(d => raw[d.k] = String(fd.get(d.k) || '').trim()); const r = nrm(m, raw); if (!r.id && m == 'init') r.id = nextId(m);
+      const e = vrec(m, r); if (!old && D[m].some(x => x.id == r.id)) e.push('ID already exists'); if (e.length) return alert('Please fix:\n• ' + e.join('\n• '));
+      if (m == 'init') r.updated = TODAY(); const ex = old ? D[m].find(x => x.id == old) : null; if (m == 'ms') { if (r.status == 'Done' && ex?.status != 'Done' && r.gate != 'Validated') { r.gate = 'Pending'; r.vdate = '' } if (r.status != 'Done' && r.gate != 'Rejected') { r.gate = ''; r.vdate = '' } }
+      if (ex) { (TR[m] || []).forEach(k => { if ((ex[k] || '') != (r[k] || '')) log(m, r.id, k, ex[k], r[k]) }); Object.assign(ex, r) } else { D[m].push(r); log(m, r.id, 'created', '', r.name || r.title || '') }
+      save(); closeM(); render()
+    }
+    function modal(h) { $('#modal').innerHTML = `<div class="mb"><div class="md">${h}</div></div>` } const closeM = () => $('#modal').innerHTML = '';
+    function del(m, id) {
+      const r = D[m].find(x => x.id == id); let msg = `Delete ${S[m].t} record ${id}? This cannot be undone.`;
+      if (m == 'init') { const a = D.ms.filter(x => x.iid == id).length, b = D.act.filter(x => x.iid == id).length; msg += `\nThis also deletes ${a} milestone(s) and ${b} action(s).` }
+      if (m == 'team') { const o = D.init.filter(i => i.owner == id); if (o.length) return alert(`Cannot delete: ${r.name} is accountable owner of ${o.length} initiative(s). Reassign them first.`); msg += `\nThey will be unassigned from milestones, actions and allocations.` }
+      if (!confirm(msg)) return;
+      if (m == 'init') { D.ms = D.ms.filter(x => x.iid != id); D.act = D.act.filter(x => x.iid != id) }
+      if (m == 'team') { D.ms.forEach(x => { if (x.holder == id) x.holder = '' }); D.act.forEach(x => { if (x.owner == id) x.owner = '' }); D.init.forEach(i => { i.team = parseAlloc(i.team).filter(a => a[0] != id).map(a => a.join(':')).join(',') }) }
+      D[m] = D[m].filter(x => x.id != id); log(m, id, 'deleted', r.name || r.title || '', ''); save(); render()
+    }
+    /* ---------- import / export ---------- */
+    const dl = (n, t, mime) => { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([t], { type: mime || 'text/plain' })); a.download = n; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 999) };
+    const csvq = v => { v = String(v ?? ''); return /[",\n\r]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v };
+    const toCsv = (keys, rows) => '\ufeff' + [keys.join(',')].concat(rows.map(r => keys.map(k => csvq(r[k])).join(','))).join('\r\n');
+    function pcsv(t) { const r = []; let row = [], c = '', q = 0; for (let i = 0; i < t.length; i++) { const ch = t[i]; if (q) { if (ch == '"' && t[i + 1] == '"') { c += '"'; i++ } else if (ch == '"') q = 0; else c += ch } else if (ch == '"') q = 1; else if (ch == ',') { row.push(c); c = '' } else if (ch == '\n' || ch == '\r') { if (ch == '\r' && t[i + 1] == '\n') i++; row.push(c); r.push(row); row = []; c = '' } else c += ch } if (c || row.length) { row.push(c); r.push(row) } const h = r.shift().map(x => x.replace(/^\ufeff/, '').trim()); return r.filter(x => x.some(y => y)).map(x => Object.fromEntries(h.map((k, i) => [k, x[i] || '']))) }
+    function sample(d) { const k = d.k; return k == 'id' ? 'EXAMPLE-001' : d.type == 'date' ? '2026-12-31' : d.type == 'num' ? '10' : d.type == 'enum' ? d.o[0] : d.type == 'ref' ? (D[d.o][0]?.id || 'EXAMPLE-REF') : k == 'team' ? 'EMP-001:30' : 'Example ' + d.l }
+    function tpl(m, fmt) {
+      const s = S[m], keys = s.f.map(d => d.k), ex = Object.fromEntries(s.f.map(d => [d.k, sample(d)]));
+      if (fmt == 'csv') return dl(`template_${m}.csv`, toCsv(keys, [ex]), 'text/csv'); if (!window.XLSX) return alert('Excel export needs the SheetJS library (loads from the internet once). Use CSV/JSON or connect once.');
+      const wb = XLSX.utils.book_new(), ins = [['INSTRUCTIONS — ' + s.t], ['Fill the data sheet. Rows whose ID starts with EXAMPLE are samples and are ignored on import. Dates: any common format (2026-12-31, 31/12/2026, 31-Dec-2026, Dec 31 2026; dd/mm is read day-first); invalid dates are rejected. Keep column names unchanged. Relationships use IDs (Team ID, Initiative ID).'], [], ['Column', 'Label', 'Required', 'Type', 'Allowed values']].concat(s.f.map(d => [d.k, d.l, d.req == 1 ? 'Mandatory' : d.req == 2 ? 'Mandatory if in delivery (target not needed for Ongoing)' : 'Optional', d.type, m == 'init' && d.k == 'id' ? 'Leave blank to auto-generate; must be unique' : d.type == 'enum' ? d.o.join(' | ') : d.type == 'ref' ? 'ID from ' + S[d.o].t : d.type == 'date' ? 'Any common date format' : '']));
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(ins), 'Instructions'); XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet([ex], { header: keys }), s.t); XLSX.writeFile(wb, `template_${m}.xlsx`)
+    }
+    function exp(m, fmt) {
+      const mods = m == 'all' ? MODS : [m]; if (fmt == 'json') return dl(m == 'all' ? `control-tower-full-${TODAY()}.json` : `${m}-${TODAY()}.json`, JSON.stringify(m == 'all' ? D : D[m], null, 1), 'application/json');
+      if (fmt == 'csv') return dl(`${m}-${TODAY()}.csv`, toCsv(S[m].f.map(d => d.k), D[m]), 'text/csv'); if (!window.XLSX) return alert('Excel export needs the SheetJS library (loads from the internet once). Use CSV/JSON.');
+      const wb = XLSX.utils.book_new(); mods.forEach(x => XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(D[x], { header: S[x].f.map(d => d.k) }), S[x].t)); XLSX.writeFile(wb, `${m}-${TODAY()}.xlsx`)
+    }
+    function vimp(m, rows, mode, fn) {
+      const ok = [], bad = [], seen = new Set(), s = S[m]; let nn = +nextId('init').split('-')[1]; const ng = () => { let id; do { id = 'INI-' + String(nn++).padStart(3, '0') } while (D.init.some(z => z.id == id) || seen.has(id)); return id };
+      if (!rows.length) return { m, mode, fn, ok, bad: [{ n: '-', id: '', why: ['File has no data rows'] }] };
+      const found = new Set(Object.keys(nrm(m, Object.fromEntries(Object.keys(rows[0]).map(k => [k, 'x'])))).filter(k => Object.keys(rows[0]).some(h => { const z = h.toLowerCase().replace(/[*\s]/g, '').replace(/^\ufeff/, ''); return z == k.toLowerCase() || s.f.some(d => d.k == k && d.l.toLowerCase().replace(/[*\s]/g, '') == z) })));
+      const miss = s.f.filter(d => d.req == 1 && !found.has(d.k)).map(d => d.k); if (miss.length) return { m, mode, fn, ok, bad: [{ n: 'header', id: '', why: ['Missing mandatory column(s): ' + miss.join(', ')] }] };
+      rows.forEach((x, i) => {
+        const r = nrm(m, x), n = i + 2; if (!r.id) { if (m != 'init') return bad.push({ n, id: '', why: ['Missing ID'] }); r.id = ng() } if (/^EXAMPLE/i.test(r.id)) return;
+        if (seen.has(r.id)) return bad.push({ n, id: r.id, why: ['Duplicate ID inside file'] }); seen.add(r.id); const ex = D[m].find(z => z.id == r.id);
+        if (ex && mode == 'add') return bad.push({ n, id: r.id, why: ['ID already exists — not overwritten (Add-only mode)'] });
+        let rec = r; if (ex) { rec = { ...ex }; Object.keys(r).forEach(k => { if (r[k] !== '') rec[k] = r[k] }) }
+        const e = vrec(m, rec); if (e.length) bad.push({ n, id: r.id, why: e }); else ok.push({ rec, op: ex ? 'update' : 'add' })
+      });
+      return { m, mode, fn, ok, bad }
+    }
+    function impView() {
+      if (!IMP) return ''; const a = IMP.ok.filter(x => x.op == 'add').length, u = IMP.ok.length - a;
+      return `<div style="margin-top:10px"><b>Preview — ${esc(IMP.fn)} → ${S[IMP.m].t}</b><p>${a} to add · ${u} to update · <span style="color:var(--r)">${IMP.bad.length} invalid (will be skipped)</span></p>${IMP.bad.length ? T(['Row', 'ID', 'Reason'], IMP.bad.slice(0, 50).map(b => `<tr><td>${b.n}</td><td>${esc(b.id)}</td><td>${esc(b.why.join('; '))}</td></tr>`)) : ''}${IMP.ok.length ? T(['Op', 'ID', 'Name'], IMP.ok.slice(0, 8).map(o => `<tr><td>${o.op}</td><td>${esc(o.rec.id)}</td><td>${esc(o.rec.name || o.rec.title)}</td></tr>`)) : ''}<div class="bar"><button class="pri" data-a="commit" ${IMP.ok.length ? '' : 'disabled'}>Commit ${IMP.ok.length} valid record(s)</button><button data-a="cancelimp">Cancel</button></div></div>`
+    }
+    async function handleFile(file) {
+      try {
+        const m = F.im || 'init', mode = F.imode || 'add', n = file.name.toLowerCase(); let rows;
+        if (n.endsWith('.json')) { const j = JSON.parse(await file.text()); if (!Array.isArray(j) && j.init) return restore(j); rows = Array.isArray(j) ? j : j[m]; if (!rows) throw Error('JSON must be an array of records or a full backup') }
+        else if (n.endsWith('.csv')) rows = pcsv(await file.text());
+        else { if (!window.XLSX) throw Error('Excel import needs the SheetJS library (loads from the internet once). Use CSV/JSON or connect once.'); const wb = XLSX.read(await file.arrayBuffer(), { type: 'array', cellDates: true }), sn = wb.SheetNames.find(x => x == S[m].t) || wb.SheetNames.find(x => !/instruction/i.test(x)); rows = XLSX.utils.sheet_to_json(wb.Sheets[sn], { defval: '', raw: false, dateNF: 'yyyy-mm-dd' }) }
+        IMP = vimp(m, rows, mode, file.name)
+      } catch (e) { IMP = null; alert('Import failed: ' + e.message) } render()
+    }
+    function restore(j) { if (!MODS.every(m => Array.isArray(j[m]))) return alert('Not a valid backup file.'); if (!confirm(`Restore will REPLACE all current data (${D.init.length} initiatives, ${D.team.length} team) with the backup (${j.init.length} initiatives, ${j.team.length} team). Continue?`)) return; D = fix(j); log('system', '-', 'restore', '', 'backup restored'); save(); IMP = null; render() }
+    /* ---------- app ---------- */
+    function render() {
+      const nav = [['dash', 'Action Centre'], ['init', 'Portfolio'], ['sched', 'Schedule'], ['val', 'Validation Gate'], ['team', 'Team & Capacity'], ['wi', 'What-if'], ['demand', 'Demand Intake'], ['act', 'Actions & Decisions'], ['adopt', 'Adoption'], ['data', 'Data & Backup'], ['man', 'User Manual']];
+      $('#nav').innerHTML = '<h1>Control Tower</h1>' + nav.map(([k, l]) => `<a data-a="go" data-id="${k}" class="${V == k || (V == 'ws' && k == 'init') ? 'on' : ''}">${l}${k == 'val' && PV() ? ` (${PV()})` : ''}</a>`).join('');
+      $('#qa').innerHTML = '<option value="">+ Quick add…</option>' + [['init', 'Initiative'], ['ms', 'Milestone'], ['act', 'Action / decision'], ['demand', 'Request'], ['team', 'Team member']].map(([k, l]) => `<option value="${k}">${l}</option>`).join('');
+      const d = D.lastBackup ? days(TODAY(), D.lastBackup) : null, has = D.init.length + D.team.length > 0; $('#lb').textContent = 'Last backup: ' + (D.lastBackup || 'never');
+      $('#banner').style.display = has && (d == null || d > D.cfg.backupDays) ? 'block' : 'none'; $('#banner').innerHTML = `⚠ ${d == null ? 'No backup yet' : 'Last backup ' + d + ' days ago'}. Data is stored only in this browser. <button data-a="backup">Download backup now</button>`;
+      $('#view').innerHTML = VIEWS[V]();
+    }
+    function go(v, p = null) { V = v; P = p; IMP = v == 'data' ? IMP : null; render(); scrollTo(0, 0) }
+    document.addEventListener('click', e => {
+      const t = e.target.closest('[data-a]'); if (!t) return; const { a, m, id, k } = t.dataset; if (a == 'ws' || t.tagName == 'A') e.preventDefault();
+      if (a == 'go') go(id); else if (a == 'ws') go('ws', id); else if (a == 'sched') go('sched', id); else if (a == 'close') closeM();
+      else if (a == 'add') form(m, '', m == 'ms' || m == 'act' ? (V == 'ws' ? { iid: P } : V == 'sched' && P ? { iid: P } : {}) : {}); else if (a == 'edit') form(m, id); else if (a == 'del') del(m, id);
+      else if (a == 'done') { const r = D.act.find(x => x.id == id); log('act', id, 'status', r.status, 'Done'); r.status = 'Done'; save(); render() }
+      else if (a == 'tog') { const i = ini(id), n = i[k] == 'Yes' ? 'No' : 'Yes'; log('init', id, k, i[k], n); i[k] = n; i.updated = TODAY(); save(); render() }
+      else if (a == 'saveview') { const n = prompt('Name for this view:'); if (n) { D.views[n] = { ...F, view: undefined }; save(); F.view = n; render() } }
+      else if (a == 'delview') { if (F.view && confirm('Delete saved view "' + F.view + '"?')) { delete D.views[F.view]; F = {}; save(); render() } }
+      else if (a == 'backup') { dl(`control-tower-backup-${TODAY()}.json`, JSON.stringify(D, null, 1), 'application/json'); D.lastBackup = TODAY(); save(); render() }
+      else if (a == 'reset') { if (prompt('This permanently deletes ALL data in this browser. Type DELETE to confirm:') == 'DELETE') { D = DEF(); save(); render() } }
+      else if (a == 'tpl') tpl(m, id); else if (a == 'exp') exp(m, id);
+      else if (a == 'commit') { IMP.ok.forEach(({ rec, op }) => { if (op == 'update') { const ex = D[IMP.m].find(x => x.id == rec.id); (TR[IMP.m] || []).forEach(q => { if ((ex[q] || '') != (rec[q] || '')) log(IMP.m, rec.id, q, ex[q], rec[q], 'import') }); Object.assign(ex, rec) } else { D[IMP.m].push(rec); log(IMP.m, rec.id, 'created', '', rec.name || rec.title || '', 'import') } }); save(); alert(IMP.ok.length + ' record(s) imported; ' + IMP.bad.length + ' skipped.'); IMP = null; render() }
+      else if (a == 'cancelimp') { IMP = null; render() }
+      else if (a == 'addch') { const v = $('#wv').value; if (!v) return alert('Enter a value'); SC.ch.push({ id: $('#wi').value, k: F.wf || 'priority', v }); render() }
+      else if (a == 'addnew') { if (!$('#nn').value) return alert('Name required'); SC.nw = { name: $('#nn').value, priority: $('#np').value, team: $('#nt').value, target: $('#nd').value }; render() }
+      else if (a == 'rmch') { SC.ch.splice(+id, 1); render() } else if (a == 'rmnew') { SC.nw = null; render() } else if (a == 'clearsc') { SC = { ch: [], nw: null }; render() }
+      else if (a == 'applysc') {
+        if (!SC.ch.length && !SC.nw) return alert('Scenario is empty'); const sm = SC.ch.map(c => `• ${c.id}: ${c.k} ${ini(c.id)[c.k] || '(blank)'} → ${c.v}`).concat(SC.nw ? ['• NEW initiative: ' + SC.nw.name] : []).join('\n');
+        if (!confirm('Apply to LIVE records?\n\n' + sm + '\n\nWarnings: ' + (scWarn(simList()).join('; ') || 'none'))) return;
+        SC.ch.forEach(c => { const i = ini(c.id); log('init', c.id, c.k, i[c.k], c.v, 'scenario applied'); i[c.k] = c.v; i.updated = TODAY() });
+        if (SC.nw) { const r = { ...SC.nw, id: nextId('init'), status: 'In progress', updated: TODAY() }; D.init.push(r); log('init', r.id, 'created', '', r.name, 'scenario applied') }
+        SC = { ch: [], nw: null }; save(); render()
+      }
+      else if (a == 'assess') assess(id); else if (a == 'vrev') vmodal(id); else if (a == 'vok') vdecide(id, 1); else if (a == 'vno') vdecide(id, 0); else if (a == 'msdone') { if (confirm('Mark as completed by the developer? It will wait in the Validation Gate until you validate it.')) { const x = D.ms.find(z => z.id == id); log('ms', id, 'status', x.status, 'Done'); x.status = 'Done'; x.aEnd = TODAY(); x.gate = 'Pending'; x.vdate = ''; save(); render() } } else if (a == 'dec') decide(m, id);
+    });
+    function vmodal(id) { const m = D.ms.find(x => x.id == id), i = ini(m.iid); modal(`<h3>Validation gate · ${esc(m.id)} ${esc(m.name)}</h3><p class="m">${esc(i?.name || '')} · declared complete by ${esc(nm(m.holder))} on ${m.aEnd || '—'}</p><p>Evidence: ${m.link ? `<a href="${esc(m.link)}" target="_blank" rel="noopener">${esc(m.link)}</a>` : '<b style="color:var(--r)">none provided</b>'}</p><div id="vm">${['I reviewed the deliverable against the milestone requirement', 'I checked tests / evidence that it works, not just the developer’s claim', 'I verified data / logic / outputs myself or by spot check', 'I am ready to stand accountable for this being complete'].map(t => `<label style="display:flex;gap:8px;color:var(--t)"><input type="checkbox" style="width:auto;display:inline-block;margin:3px 0 0"> ${t}</label>`).join('')}<label>Validation note (required to reject)<textarea id="vn">${esc(m.vnote || '')}</textarea></label></div><div class="bar"><button class="pri" data-a="vok" data-id="${esc(id)}">Validate — I take responsibility</button><button class="dng" data-a="vno" data-id="${esc(id)}">Reject — send back</button><button data-a="close">Cancel</button></div>`) }
+    function vdecide(id, ok) {
+      const m = D.ms.find(x => x.id == id), note = $('#vn').value.trim();
+      if (ok && ![...document.querySelectorAll('#vm input[type=checkbox]')].every(c => c.checked)) return alert('Tick all four checks before validating.');
+      if (!ok && !note) return alert('Add a note explaining what must be fixed.');
+      const old = gate(m); if (ok) { m.gate = 'Validated' } else { m.gate = 'Rejected'; m.status = 'In progress'; m.aEnd = '' } m.vdate = TODAY(); m.vnote = note;
+      log('ms', id, 'gate', old, m.gate, note); const i = ini(m.iid); if (i) i.updated = TODAY(); save(); closeM(); render()
+    }
+    function assess(id) {
+      const d = D.demand.find(x => x.id == id), free = D.team.reduce((s, p) => s + Math.max(0, avail() - ld(p.id)), 0), need = +d.effort || 0,
+      cand = D.init.filter(i => ACT.includes(i.status) && pw(i.priority) < pw(d.priority || 'Low') + (d.priority ? 0 : 0)).sort((a, b) => pw(a.priority) - pw(b.priority));
+      modal(`<h3>${esc(d.id)} · ${esc(d.name)}</h3><p>Priority ${esc(d.priority || '—')} · Effort ${need || '?'} pts · Requested ${d.reqDate || '—'}</p><p><b>Free team capacity</b> (after ${D.cfg.buffer}% buffer): ${free} pts across ${D.team.length} people.</p>
+ <p style="color:var(--${need > free ? 'r' : 'g'})"><b>${!need ? 'Effort not estimated — cannot assess impact. Ask for clarification.' : need > free ? `Shortfall of ${need - free} pts: accepting this means moving an existing commitment.` : 'Fits within free capacity.'}</b></p>
+ ${need > free && d.priority ? `<p><b>Lower-priority active initiatives that could be deferred:</b></p>${cand.map(i => `<div>• ${esc(i.id + ' ' + i.name)} (${i.priority}, ${parseAlloc(i.team).reduce((s, a) => s + a[1], 0)} pts)</div>`).join('') || '<div class="m">None — nothing lower priority to move; this will displace equal/higher priority work.</div>'}` : ''}
+ <div class="bar">${['Accepted', 'Rejected', 'Deferred', 'Clarification required'].map(x => `<button class="${x == 'Accepted' ? 'pri' : ''}" data-a="dec" data-m="${x}" data-id="${esc(id)}">${x == 'Accepted' ? 'Accept' : x == 'Clarification required' ? 'Clarify' : x.slice(0, -2) == 'Reject' ? 'Reject' : 'Defer'}</button>`).join('')}<button data-a="close">Close</button></div>`)
+    }
+    function decide(dec, id) {
+      const d = D.demand.find(x => x.id == id); if (dec == 'Accepted' && !confirm('Accepting adds a draft initiative and may require deferring existing commitments (see impact). Accept?')) return;
+      log('demand', id, 'decision', d.decision, dec); d.decision = dec;
+      if (dec == 'Accepted' && confirm('Create a draft initiative (Not Started) from this request?')) { const r = { id: nextId('init'), name: d.name, description: d.description, objective: d.value, sponsor: d.sponsor, priority: d.priority, target: d.reqDate, status: 'Not started', remarks: 'From request ' + d.id, updated: TODAY() }; D.init.push(r); log('init', r.id, 'created', '', r.name, 'from ' + d.id) }
+      save(); closeM(); render()
+    }
+    document.addEventListener('submit', e => { e.preventDefault(); if (e.target.matches('#fm')) submitForm(e.target) });
+    document.addEventListener('change', e => {
+      const t = e.target;
+      if (t.id == 'qa' && t.value) { form(t.value); t.value = '' } else if (t.id == 'fi' && t.files[0]) { handleFile(t.files[0]); t.value = '' }
+      else if (t.id == 'rf' && t.files[0]) { t.files[0].text().then(x => { try { restore(JSON.parse(x)) } catch (er) { alert('Invalid JSON: ' + er.message) } }); t.value = '' }
+      else if (t.dataset.c) { const v = +t.value; if (isNaN(v) || v < 0) return alert('Enter a valid number'); D.cfg[t.dataset.c] = v; save(); render() }
+      else if (t.dataset.f) { const k = t.dataset.f; if (k == 'sp') { P = t.value || null } else if (k == 'view') { F = t.value ? { ...D.views[t.value], view: t.value } : {} } else F[k] = t.value; render() }
+    });
+    $('#gs').addEventListener('keydown', e => { if (e.key == 'Enter' && e.target.value.trim()) go('search', e.target.value.trim()) });
+    render();
+  </script>
+</body>
+
+</html>
