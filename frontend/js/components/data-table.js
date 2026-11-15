@@ -10,6 +10,7 @@
  *   defaultSort: '-updated_at',
  *   pageSize: 25,
  *   onRowClick: (row) => {...},
+ *   rowClass: (row) => (row.is_overdue ? 'is-late' : null),   // optional extra class per row
  *   emptyState: { title: 'No records', message: 'Try changing the filters' },
  * });
  * card.append(table.element);
@@ -22,7 +23,7 @@ import { clear, el, formatValue } from '../core/utils.js';
 import { createEmptyState } from './empty-state.js';
 import { showError } from './toast.js';
 
-export function createDataTable({ columns, fetchPage, defaultSort = '', pageSize = 25, onRowClick, emptyState = {} }) {
+export function createDataTable({ columns, fetchPage, defaultSort = '', pageSize = 25, onRowClick, rowClass, emptyState = {} }) {
   const state = { page: 1, perPage: pageSize, sort: defaultSort, filters: {}, requestId: 0 };
 
   const thead = el('thead');
@@ -73,14 +74,14 @@ export function createDataTable({ columns, fetchPage, defaultSort = '', pageSize
       return;
     }
     for (const item of items) {
-      const tr = el('tr', { class: onRowClick ? 'is-clickable' : null });
+      const tr = el('tr', { class: [onRowClick ? 'is-clickable' : null, rowClass?.(item)].filter(Boolean).join(' ') || null });
       for (const col of columns) {
         const value = col.render ? col.render(item) : formatValue(item[col.key]);
         tr.append(el('td', {}, value));
       }
       if (onRowClick) {
         tr.tabIndex = 0;
-        tr.addEventListener('click', () => onRowClick(item));
+        tr.addEventListener('click', (e) => { if (!e.target.closest('a, button')) onRowClick(item); });
         tr.addEventListener('keydown', (e) => { if (e.key === 'Enter') onRowClick(item); });
       }
       tbody.append(tr);

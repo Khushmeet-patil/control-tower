@@ -6,13 +6,16 @@
 | 0 | Foundation | Done (local SQLite; MySQL schema in backend/database/schema_mysql.sql) |
 | 1 | Organisation, people and access | Done |
 | 2 | Lookups and settings | Done (custom fields wired to People; work items reuse them in Phase 3) |
-| 3 | Work items, ownership and delegation | Not started |
-| 4 | Configurable approvals and validated progress | Not started |
-| 5 | Health rules, saved filters and Action Centre | Not started |
-| 6 | Personal home, team view and dashboards | Not started |
+| 3 | Work items, ownership and delegation | Done |
+| 4 | Configurable approvals and validated progress | Done |
+| 5 | Health rules, saved filters and Action Centre | Done |
+| 6 | Personal home, team view and dashboards | Done |
 | 7 | Tools registry | Not started |
 | 8 | Snapshots, exports and presentation | Not started |
 | 9 | Import, backup and hardening | Not started |
+
+## Reference prototype
+The manager's prototype (`reference/MY Control Tower 1.html`) is the **target for screens, look and business rules**. [MVP_ANALYSIS.md](MVP_ANALYSIS.md) lists every screen and rule, the prototype's defects, and which phase delivers each feature (§7). Each phase below also builds the prototype screens mapped to it, on real data.
 
 ## Context
 Control Tower is an organisation-wide platform for tracking work. It keeps one trusted copy of all work data and is meant to replace spreadsheets. It is based on the blueprint in `single_source_of_truth_project_control_platform_blueprint (1).md`, with the user's confirmed changes:
@@ -129,6 +132,17 @@ Each phase is a complete working feature through every layer: database → servi
 
 **Done when:** a company initiative is split down to a department, a team and an employee task, with owners inherited or overridden; a manager assigns three people with different roles; a contributor can edit only the fields they are allowed to.
 
+**As built** (`app/modules/work`, tests in `tests/test_work.py`):
+- One `work_items` tree (closure table) for every item type, including the prototype's Actions (decision, approval, blocker, commitment, action) with an action type and severity. Lookups added: category, action type, severity; statuses Ideation, Ongoing, Under validation; item type Action.
+- Readable codes per type (PRJ-001, MS-004, ACT-002); deleted codes are never reused.
+- Access per item: **manage** (unit managers with `work.manage`, the accountable owner of the item or any item above it, the responsible owner of an item above it), **contribute** (responsible owners and assignees: status, actual dates, progress, evidence and remarks only; responsible owners may also add child items), or **view**. Visibility: unit scope, led functions, and anything a person is named on, plus everything below it.
+- Work moves down the hierarchy: a child goes to its parent's unit or one below it.
+- Assignments: person, functional role, allocation %, dates and duties; `GET /assignments/load` gives today's total load per person (closed items and past assignments left out).
+- Custom fields can be limited to item types; required fields apply only to those types.
+- "Today" and "overdue" use the organisation's timezone (`TIMEZONE`, default Asia/Kolkata).
+- Progress is interim (share of finished child items, or the manual % for a leaf); Phase 4 replaces it with validated, weighted progress.
+- Screens: Portfolio (`work.html`), item workspace (`item.html`: Details, Work breakdown with timeline, People, History), My work, Schedule (timeline plus planned vs actual), real lists on My Home, and search plus "+ New" in the top bar. The Approvals and Tools tabs arrive with Phases 4 and 7.
+
 ### Phase 4 — Configurable approvals and validated progress
 - A workflow designer: stages, allowed transitions, and **approval chains** per item type or team. For each step: the approver (role, person or owner), what happens if there is no approver (skip or block), and what is required (checklist, evidence, comment).
 - Seeded default: **functional lead → accountable manager**.
@@ -138,6 +152,16 @@ Each phase is a complete working feature through every layer: database → servi
 
 **Done when:** a milestone marked complete goes to the functional lead, then the manager; approval raises the parent's progress; rejection returns the item; every decision is audited; changing the chain in admin changes the behaviour without code.
 
+**As built** (`app/modules/workflows`, `app/modules/work/progress.py`, tests in `tests/test_workflows.py`):
+- Approval chains and steps are settings: drafted in admin (Approval chains), used once published, versioned and rolled back with the other settings. The most specific chain wins (unit before organisation-wide, typed before untyped, then order). Work without a chain counts as finished at once.
+- Step approvers: functional lead (the item's function, else the responsible owner's; walks up the function tree), accountable owner, unit head (walks up), anyone with a role, or a named person. When nobody fits: skip, or wait (an administrator may then decide, and item managers can "look for an approver again").
+- Built-in rules: nobody approves their own work (their line manager does instead); someone who already approved is not asked twice; rejecting needs a note and returns the item to In progress; reopening a completed item cancels its approval; running requests keep the steps they started with.
+- Seeded chain = the prototype's validation gate for milestones: functional lead review (evidence link required, two checks), then accountable owner validation (the prototype's four checks).
+- "Mark complete" (`POST /work-items/<id>/complete`) is open to contributors; it sets Done and the finish date and starts approval in the same transaction.
+- Progress engine: leaf = 100% only when done and approved (or no approval needed), else its manual %; parents = weighted average of children (new `weight` field), all the way up. `GET /work-items/rollup?unit_id=` gives a unit's progress and counts.
+- Screens: Approvals inbox (waiting for me, submitted by me, my decisions, nobody to ask) with a count in the sidebar; review dialog with checklist; item page Approvals tab, status banner and "Mark complete"; Approvals on My Home; Approval chains admin.
+- **Deferred:** allowed status transitions per item type ("stages and transitions"). Statuses remain free to change; approvals cover the "Done when" checks. Revisit with Phase 5 rules. In-app notifications beyond the sidebar count also wait for a later phase.
+
 ### Phase 5 — Health rules, saved filters and Action Centre
 - Health rules stored as data and edited in admin (e.g. overdue by more than X days = Red, no owner = Grey). Priority order: Red > Amber > Grey > Green.
 - Each result explains itself: the rule, the reason, the item that caused it, and a recommended action. Health rolls up to parent items.
@@ -146,12 +170,33 @@ Each phase is a complete working feature through every layer: database → servi
 
 **Done when:** an overdue high-priority milestone turns Red with a visible reason; the parent item shows which child caused it; Action Centre counts match the filtered list.
 
+**As built** (`app/modules/rules`, `app/modules/views`, tests in `tests/test_rules.py`):
+- Health rules are settings (drafted in admin, used once published). A rule = a condition type from `rules/catalog.py` (overdue, due soon not started, has status, open action, missing field, no child items, nothing planned next, owner overloaded, approval waiting, approval refused, not updated, nobody assigned) + data: thresholds, colour, item types, Action Centre score, recommended action (with {accountable}, {responsible}, {escalation}, {days}, {item}) and escalation owner (accountable, their manager, parent's accountable, unit head, awaited approver).
+- The 17 seeded rules reproduce the prototype's `health()`, `dq()` and `top5()`. Kind "data_quality" raises flags without changing the colour.
+- Health is calculated on read, never stored: Red > Amber > Grey > Green; Ideation, On hold, Done and Cancelled are not assessed (except Done work still waiting for approval); parents take their worst child's colour and name the item deep down that caused it. Items a viewer cannot open are not named.
+- Health filter on `GET /work-items?health=red` (also `red,amber`, `na`), so Action Centre numbers and Portfolio lists always agree (tested for three roles).
+- Action Centre (`GET /action-centre`): KPIs with the Portfolio filter behind each, Top 5 and "also needs me" with scoring factors (rule score + priority + days late or waiting; approvals waiting for you score 88), priority × health, spreads, next 14 days, data-quality flags.
+- Saved views: personal, or shared with `views.share` (managers, executives); list or board layout. Seeded shared views bring back the prototype's Actions & Decisions screen (actions, open blockers, pending decisions), plus Red and amber work and a milestones board.
+- Screens: Action Centre, Top 5 on My Home, health column and filter, board layout and saved views on Portfolio, "Why it has this health" on the item page, Health rules admin.
+- **Deferred:** the prototype's Adoption tracker (Dev → Test → Accepted → Trained → Rollout → Adopted) moves to Phase 6 with the dashboards; drag-and-drop on the board is not built (cards open the item).
+
 ### Phase 6 — Personal home, team view and dashboards
 - My Home, depending on role: Accountable for, Responsible for, My tasks, Awaiting my approval, and Upcoming deadlines.
 - Team view for managers: members, workload and allocation, progress, and overdue items; drill-down from any number to the records behind it.
 - Dashboard builder: widgets (KPI, table, status chart, progress, timeline) built on saved filters, using Chart.js, limited to the user's units.
 
 **Done when:** a manager sees only their team's numbers; a dashboard KPI matches the list it drills into.
+
+**As built** (`app/modules/dashboards`, tests in `tests/test_dashboards.py`):
+- **One query for numbers and lists.** `WorkItemService.query()` builds the scoped, filtered select behind `GET /work-items`; `count()` and `rows()` reuse it. `portfolio_params()` turns Portfolio-style filters (`level`, `unit_id`…, as in its URL and in saved views) into list parameters, mirroring `toQuery()` in `work.js`. Every KPI on Team, Dashboards, Home and the Action Centre is counted from the exact filters its link opens, and `portfolioUrl()` always states the level. Tests check number = list total for several roles.
+- New list filters: `involves=<person>` (accountable, responsible or assigned), `allocated_to=<person>` (assignments counted in today's load), `due_within=<days>`, plus `approval_status` and `actual_end` comparisons.
+- **My Home:** KPIs (accountable, responsible, overdue, due in 14 days, awaiting approval), Top 5, my lists, approvals, upcoming deadlines; for managers a "My team" card with exceptions and the units below. For organisation-wide roles this is the executive roll-up by division.
+- **Team view** (`GET /team?unit_id=`, `team.html`, nav "My team" for `work.manage`): only units the viewer manages (403 otherwise; contributors have none). People in the unit and below with load %, free %, Overloaded / Balanced / Underutilised (usable capacity = 100 − the published "owner overloaded" rule's buffer, so it matches the health rule), and drill-down counts. Load includes work the manager cannot open, shown as "+N you cannot open" so the list still matches. Units below with weighted progress, plus overdue work.
+- **Dashboards** (`dashboards` table; `/dashboards`, `/dashboards/<id>/data`): personal, or shared with the new `dashboards.share` permission (managers and executives). Widgets: KPI, table, status chart (group by status, priority, health, type, category or accountable; bar or doughnut, Chart.js vendored at `frontend/assets/vendor`), progress, timeline, and my top actions. A widget uses a saved view (following its current filters, with a copy kept in case the view is deleted) or its own filters. Filters are checked against the list API on save. Data is calculated for the viewer, so a shared dashboard never shows more than they may see. Seeded shared dashboard: "Portfolio overview".
+- **Action Centre additions** from the prototype: a progress board (worst health first, next item, next action), a watchlist, team capacity bars, technical completion vs adoption, and milestones completed per month (each bar opens its list).
+- **Matched to the reference prototype** (`app/modules/dashboards/review.py`): the Action Centre follows the prototype's section order and content. That means its 7-tile KPI strip (top-level items with how many are in delivery, Red, overdue milestones, open blockers, pending decisions, awaiting my validation, data-quality flags); Top 5; the initiative progress board (category, next milestone with date and holder, next open action with owner, "⏳ N to validate"); **hold points** (Validate with Review, Blocker, Decision, Late milestone, Setup gap, in the prototype's urgency order); priority × health with the watchlist (signals plus stale updates); distributions by priority, status, category and health; team capacity with each person's open actions; technical completion vs adoption; **validated** milestones per month; upcoming milestones (14 days, with the item they belong to and the holder); blockers and pending decisions, with late rows tinted. My team uses the prototype's Team & Capacity columns: role and function, allocated, free, status, initiatives, open actions. New list filters `validated=1` and `responsible_id=<person>` keep these figures drillable. New signal rule `quick_win` (score 40): at least 80% done, and someone on the item or in its unit is underutilised.
+- **Adoption tracker** (`adoption.html`, plus an Adoption section on the item page): the stages are a new lookup list `adoption_stage` (Development, Testing, Business acceptance, Users trained, Rolled out, Adoption achieved), stored as `work_items.adoption_stage_ids` with `adoption_evidence`. Item managers can change them, and every change is audited. New rule kind **signal** (ranks in Top 5 and the watchlist, never changes the colour) and condition `adoption_gap`. Seeded signals: "Ready for rollout" (50) and "Built, not adopted" (45). Missing built-in rules are now added on seed, which is safe because rules are never deleted.
+- **Deferred:** to 6A: time-phased capacity, skills, time off, and capacity widgets. Templates (reusable item hierarchies, listed under Phase 6 in CAPABILITY_PHASE_MAP.md but not in this plan) are not built yet. Drag-and-drop widget layout is not built (widgets move left and right instead).
 
 ### Phase 7 — Tools registry
 - Tool records: name, URL, description, icon, and which projects, teams or roles it applies to.

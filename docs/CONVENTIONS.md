@@ -22,6 +22,7 @@ Rules every change must follow. They keep the code reusable and the platform dri
   - `person_visibility_clause(user)` limits any people query.
 
   Every list, count and detail must apply scope, and counts must match the lists they lead to.
+  Count work with `WorkItemService(actor).count(portfolio_params(filters))` and link with `portfolioUrl(filters)` (frontend `work-table.js`), using the same `filters`.
 - **Linked values** (e.g. a person's `role_ids`) are declared in `CommandService.extra_fields`, so they are validated, compared and audited like columns.
 - **Permissions:** new permission codes go in `app/modules/access/catalog.py`. Which roles hold them is data.
 - **Lookups and settings** (`app.modules.lookups`, `app.modules.config`):
@@ -58,8 +59,9 @@ Rules every change must follow. They keep the code reusable and the platform dri
 
 ## UI and styling
 - Colours, spacing, radius, shadows and fonts are defined only as CSS variables in `css/tokens.css`. Components never contain hex values.
-- Palette: neutral greys plus one accent (muted navy). Red, amber, grey and green are for status only, and the actual colours come from lookup values.
-- 14px base font, 8px spacing grid, 6px radius, light shadows. Keep screens calm, with plenty of white space and no decorative colour.
+- The look follows the manager's reference prototype (`reference/MY Control Tower 1.html`; see [MVP_ANALYSIS.md](MVP_ANALYSIS.md) §5): a cool grey background, a light sidebar whose active item is a raised white chip, and soft raised cards (`--ct-shadow-raised`, `--ct-radius-lg`) with no borders.
+- Palette: neutral greys plus one blue accent. Red, amber, grey and green are for status only, and the actual colours come from lookup values.
+- 14px base font, 13px tables, 8px spacing grid, 8px radius for controls and 14px for cards. Use `ct-kpis`/`ct-kpi` for number tiles, `ct-bar-row`/`ct-bar` for progress and distributions, and `is-late` on overdue table rows.
 - File roles: `base.css` (reset and elements), `layout.css` (shell, grid), `components.css` (buttons, cards, table, forms, badges, modal, toast).
 
 ## Naming

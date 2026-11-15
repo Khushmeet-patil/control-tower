@@ -25,6 +25,24 @@ const NAV = [
     ],
   },
   {
+    section: 'Work',
+    items: [
+      { key: 'action-centre', label: 'Action Centre', href: '/pages/action-centre.html', icon: 'target', perm: 'work.view' },
+      { key: 'work', label: 'Portfolio', href: '/pages/work.html', icon: 'briefcase', perm: 'work.view' },
+      { key: 'my-work', label: 'My work', href: '/pages/my-work.html', icon: 'tasks', perm: 'work.view' },
+      { key: 'schedule', label: 'Schedule', href: '/pages/schedule.html', icon: 'calendar', perm: 'work.view' },
+      { key: 'approvals', label: 'Approvals', href: '/pages/approvals.html', icon: 'check', perm: 'work.view' },
+      { key: 'team', label: 'My team', href: '/pages/team.html', icon: 'users', perm: 'work.manage' },
+    ],
+  },
+  {
+    section: 'Insights',
+    items: [
+      { key: 'dashboards', label: 'Dashboards', href: '/pages/dashboards.html', icon: 'chart', perm: 'work.view' },
+      { key: 'adoption', label: 'Adoption', href: '/pages/adoption.html', icon: 'flag', perm: 'work.view' },
+    ],
+  },
+  {
     section: 'Organisation',
     items: [
       { key: 'organisation', label: 'Organisation', href: '/pages/organisation.html', icon: 'org', perm: 'org.view' },
@@ -38,6 +56,8 @@ const NAV = [
       { key: 'roles', label: 'Roles & access', href: '/pages/admin/roles.html', icon: 'shield', perm: 'roles.manage' },
       { key: 'lookups', label: 'Lookups & colours', href: '/pages/admin/lookups.html', icon: 'list', perm: 'settings.manage' },
       { key: 'fields', label: 'Custom fields', href: '/pages/admin/fields.html', icon: 'form', perm: 'settings.manage' },
+      { key: 'rules', label: 'Health rules', href: '/pages/admin/rules.html', icon: 'target', perm: 'settings.manage' },
+      { key: 'workflows', label: 'Approval chains', href: '/pages/admin/workflows.html', icon: 'check', perm: 'settings.manage' },
       { key: 'terms', label: 'Terminology', href: '/pages/admin/terminology.html', icon: 'type', perm: 'settings.manage' },
       { key: 'versions', label: 'Settings versions', href: '/pages/admin/versions.html', icon: 'versions', perm: 'settings.manage' },
       { key: 'audit', label: 'Audit log', href: '/pages/admin/audit.html', icon: 'history', perm: 'audit.view' },
@@ -65,6 +85,7 @@ function buildSidebar(active, user) {
         class: `ct-sidebar__link${item.key === active ? ' is-active' : ''}`,
         href: item.href,
         'aria-current': item.key === active ? 'page' : null,
+        dataset: { nav: item.key },
       }, icon(item.icon), item.term ? term(item.term, { plural: true, fallback: item.label }) : item.label));
     }
   }
@@ -100,6 +121,28 @@ function buildUserMenu(user) {
   return el('div', { class: 'ct-user-menu' }, trigger, panel);
 }
 
+/** Search work from any page (opens the Portfolio filtered by the text). */
+function buildSearch() {
+  const input = el('input', { class: 'ct-input', type: 'search', placeholder: 'Search work…', 'aria-label': 'Search work' });
+  const form = el('form', { class: 'ct-topbar__search', role: 'search', onSubmit: (e) => {
+    e.preventDefault();
+    const q = input.value.trim();
+    if (q) window.location.href = `/pages/work.html?q=${encodeURIComponent(q)}`;
+  } }, el('span', { class: 'ct-topbar__search-icon' }, icon('search', { size: 16 })), input);
+  return form;
+}
+
+/** "+ New" on every page: pick a type, fill the form, then go to the new item. */
+function buildQuickAdd() {
+  return el('button', {
+    class: 'ct-btn ct-btn--primary ct-btn--sm', type: 'button',
+    onClick: async () => {
+      const { openNewWorkItem } = await import('../components/work-item-form.js');
+      openNewWorkItem({ onDone: (saved) => { window.location.href = `/pages/item.html?id=${saved.id}`; } });
+    },
+  }, icon('plus', { size: 16 }), el('span', { class: 'ct-topbar__btn-label' }, 'New'));
+}
+
 export async function initLayout({ active, title, permission }) {
   const user = await getCurrentUser();
   if (!user) {
@@ -120,6 +163,8 @@ export async function initLayout({ active, title, permission }) {
   const topbar = el('header', { class: 'ct-topbar' },
     menuBtn,
     el('div', { class: 'ct-topbar__title' }, title),
+    can(user, 'work.view') ? buildSearch() : null,
+    can(user, 'work.create') ? buildQuickAdd() : null,
     buildUserMenu(user));
 
   app.append(buildSidebar(active, user), el('div', { class: 'ct-main' }, topbar, content));
@@ -128,6 +173,7 @@ export async function initLayout({ active, title, permission }) {
   });
 
   document.body.replaceChildren(app);
+  if (can(user, 'work.view')) refreshApprovalCount();
 
   // Page-level guard: the server enforces access anyway; this avoids showing a page the user cannot use.
   if (!can(user, permission)) {
@@ -141,6 +187,18 @@ export async function initLayout({ active, title, permission }) {
     return new Promise(() => {}); // stop the page here
   }
   return { user, content };
+}
+
+/** Number of approvals waiting for the user, shown next to "Approvals" in the sidebar. */
+export async function refreshApprovalCount() {
+  const link = document.querySelector('[data-nav="approvals"]');
+  if (!link) return;
+  try {
+    const { api } = await import('./api.js');
+    const { waiting_for_me: n } = await api.get('/approvals/counts');
+    link.querySelector('.ct-nav-count')?.remove();
+    if (n) link.append(el('span', { class: 'ct-nav-count', title: `${n} waiting for your approval` }, String(n)));
+  } catch { /* the count is a convenience; never block the page */ }
 }
 
 /** Standard page heading: title, optional subtitle, optional action buttons on the right. */

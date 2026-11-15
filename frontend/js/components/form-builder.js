@@ -16,12 +16,13 @@
  * form.setErrors(err) → shows an ApiError on the matching field (or at the top)
  *
  * Types: text, email, password, number, date, url, color, textarea, select, checkbox,
- *        checkboxes (multiselect is the same), person.
+ *        checkboxes (multiselect is the same), person, people (several persons → [ids]).
+ * Person fields accept `onChange(person)`.
  * Admin-defined custom fields become these definitions via components/custom-fields.js.
  */
 import { el } from '../core/utils.js';
 import { openModal } from './modal.js';
-import { createPersonPicker } from './person-picker.js';
+import { createPeoplePicker, createPersonPicker } from './person-picker.js';
 
 let uid = 0;
 
@@ -75,7 +76,11 @@ export function createForm({ fields, values = {}, columns = 2 }) {
         return { node: group, get: () => boxes.filter(([b]) => b.checked).map(([, v]) => v) };
       }
       case 'person': {
-        const picker = createPersonPicker({ value: value || null, id, placeholder: field.placeholder, exclude: field.exclude });
+        const picker = createPersonPicker({ value: value || null, id, placeholder: field.placeholder, exclude: field.exclude, onChange: field.onChange, disabled: field.disabled });
+        return { node: picker.element, get: () => picker.getValue() };
+      }
+      case 'people': {
+        const picker = createPeoplePicker({ value: value || [], id, placeholder: field.placeholder, disabled: field.disabled });
         return { node: picker.element, get: () => picker.getValue() };
       }
       case 'number':
@@ -98,7 +103,7 @@ export function createForm({ fields, values = {}, columns = 2 }) {
     const control = buildControl(field, id);
     controls.set(field.key, control);
     const error = el('div', { class: 'ct-field__error ct-hidden' });
-    const wrapper = el('div', { class: `ct-field${field.full || ['textarea', 'checkboxes', 'multiselect'].includes(field.type) ? ' ct-field--full' : ''}` },
+    const wrapper = el('div', { class: `ct-field${field.full || ['textarea', 'checkboxes', 'multiselect', 'people'].includes(field.type) ? ' ct-field--full' : ''}` },
       control.labelInside ? null : el('label', { class: 'ct-label', for: id }, field.label, field.required ? el('span', { class: 'ct-required', 'aria-hidden': 'true' }, '*') : null),
       control.node,
       field.help ? el('div', { class: 'ct-field__help' }, field.help) : null,

@@ -93,8 +93,14 @@ def _register_blueprints(app: Flask) -> None:
     from app.modules.lookups.routes import bp as lookups_bp
     from app.modules.organisation.routes import bp as organisation_bp
     from app.modules.people.routes import bp as people_bp
+    from app.modules.work.routes import bp as work_bp
+    from app.modules.rules.routes import bp as rules_bp
+    from app.modules.views.routes import bp as views_bp
+    from app.modules.workflows.routes import bp as workflows_bp
+    from app.modules.dashboards.routes import bp as dashboards_bp
 
-    for bp in (auth_bp, audit_bp, organisation_bp, people_bp, access_bp, lookups_bp, config_bp):
+    for bp in (auth_bp, audit_bp, organisation_bp, people_bp, access_bp, lookups_bp, config_bp, work_bp, workflows_bp,
+               rules_bp, views_bp, dashboards_bp):
         app.register_blueprint(bp)
 
     @app.get("/api/v1/health")
@@ -122,3 +128,8 @@ from app.modules.auth import models as _auth_models  # noqa: E402,F401
 from app.modules.config import models as _config_models  # noqa: E402,F401
 from app.modules.lookups import models as _lookup_models  # noqa: E402,F401
 from app.modules.organisation import models as _org_models  # noqa: E402,F401
+from app.modules.work import models as _work_models  # noqa: E402,F401
+from app.modules.workflows import models as _workflow_models  # noqa: E402,F401
+from app.modules.rules import models as _rule_models  # noqa: E402,F401
+from app.modules.views import models as _view_models  # noqa: E402,F401
+from app.modules.dashboards import models as _dashboard_models  # noqa: E402,F401

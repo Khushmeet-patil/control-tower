@@ -123,7 +123,8 @@ class CommandService:
         data = self._clean(data)
         with self._transaction():
             if self.custom_entity:
-                data["custom_fields"] = self._clean_custom(data.get("custom_fields"), None, creating=True)
+                data["custom_fields"] = self._clean_custom(data.get("custom_fields"), None, creating=True,
+                                                           context=data)
             self.validate_create(data)
             columns = {k: v for k, v in data.items() if k not in self.extra_fields}
             extras = {k: v for k, v in data.items() if k in self.extra_fields}
@@ -151,7 +152,8 @@ class CommandService:
         changes = self._clean(changes)
         with self._transaction():
             if self.custom_entity and "custom_fields" in changes:
-                incoming = self._clean_custom(changes.pop("custom_fields"), obj.custom_fields, creating=False)
+                incoming = self._clean_custom(changes.pop("custom_fields"), obj.custom_fields, creating=False,
+                                              context=obj)
                 changes.update({f"{CUSTOM_PREFIX}{code}": value for code, value in incoming.items()})
             self.validate_update(obj, changes)
             before = {f: self.read_value(obj, f) for f in changes}
@@ -196,12 +198,17 @@ class CommandService:
             raise ValidationFailed("Some fields cannot be set", {"fields": sorted(blocked)})
         return dict(data)
 
-    def _clean_custom(self, incoming, existing, *, creating):
+    def custom_field_scope(self, context) -> dict:
+        """Extra arguments for custom field validation. `context` is the create data or the record.
+        Work items return {"item_type_id": …} so fields limited to other item types are left out."""
+        return {}
+
+    def _clean_custom(self, incoming, existing, *, creating, context=None):
         from app.modules.config.custom_fields import clean_custom_values
 
         # Required fields are not enforced for system jobs (seed data), only for people and imports.
         return clean_custom_values(self.tenant_id, self.custom_entity, incoming, existing, creating=creating,
-                                   check_required=self.source != "system")
+                                   check_required=self.source != "system", **self.custom_field_scope(context))
 
     def _accepted_inputs(self) -> set[str]:
         """Create-only inputs that are consumed by validate/apply_create (e.g. 'password')."""

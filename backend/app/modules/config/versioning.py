@@ -10,6 +10,8 @@ from sqlalchemy import select
 from app.extensions import db
 from app.modules.config.models import ENTITY_TYPES, FIELD_TYPES, ConfigVersion, FieldDefinition, Term
 from app.modules.lookups.models import LookupType, LookupValue
+from app.modules.rules.models import HealthRule
+from app.modules.workflows.models import ApprovalChain, ApprovalStep
 
 # collection → (model, audit entity type, snapshot fields, how to name a row in a change list)
 COLLECTIONS = {
@@ -27,7 +29,25 @@ COLLECTIONS = {
     "terms": (Term, "term",
               ["key", "singular", "plural", "default_singular", "default_plural", "description"],
               lambda r, s: f"Term “{r['default_singular']}”"),
+    "approval_chains": (ApprovalChain, "approval_chain",
+                        ["code", "name", "description", "item_type_ids", "unit_id", "sort_order", "is_active"],
+                        lambda r, s: f"Approval chain “{r['name']}”"),
+    "approval_steps": (ApprovalStep, "approval_step",
+                       ["chain_id", "name", "sort_order", "approver_kind", "approver_role_id", "approver_person_id",
+                        "when_missing", "checklist", "require_evidence", "require_comment", "is_active"],
+                       lambda r, s: f"Step “{r['name']}” in {_chain_name(s, r['chain_id'])}"),
+    "health_rules": (HealthRule, "health_rule",
+                     ["code", "name", "kind", "rule_type", "params", "outcome", "item_type_ids", "score",
+                      "recommended_action", "escalate_to", "description", "sort_order", "is_active"],
+                     lambda r, s: f"Rule “{r['name']}”"),
 }
+
+
+def _chain_name(snapshot, chain_id):
+    for c in snapshot.get("approval_chains", []):
+        if c["id"] == chain_id:
+            return f"“{c['name']}”"
+    return "a chain"
 
 
 def _type_name(snapshot, type_id):
@@ -138,3 +158,26 @@ def published_fields(tenant_id: int, entity_type: str) -> list[dict]:
 def published_values(tenant_id: int, lookup_type_id: int) -> dict[int, dict]:
     snapshot, _ = published_snapshot(tenant_id)
     return {v["id"]: v for v in snapshot.get("lookup_values", []) if v["lookup_type_id"] == lookup_type_id}
+
+
+def published_list(tenant_id: int, type_code: str) -> dict[int, dict]:
+    """Published values of the lookup list with this code, by id ({} if the list does not exist)."""
+    snapshot, _ = published_snapshot(tenant_id)
+    type_id = next((t["id"] for t in snapshot.get("lookup_types", []) if t["code"] == type_code), None)
+    return published_values(tenant_id, type_id) if type_id else {}
+
+
+def published_value_id(tenant_id: int, type_code: str, value_code: str) -> int | None:
+    """Id of one published lookup value, found by list code and value code (e.g. "status", "done")."""
+    return next((v["id"] for v in published_list(tenant_id, type_code).values() if v["code"] == value_code), None)
+
+
+def published_chains(tenant_id: int) -> list[dict]:
+    """Active published approval chains, each with its active steps in order (key "steps")."""
+    snapshot, _ = published_snapshot(tenant_id)
+    steps = {}
+    for st in snapshot.get("approval_steps", []):
+        if st["is_active"]:
+            steps.setdefault(st["chain_id"], []).append(st)
+    return [{**c, "steps": sorted(steps.get(c["id"], []), key=lambda x: (x["sort_order"], x["id"]))}
+            for c in snapshot.get("approval_chains", []) if c["is_active"]]

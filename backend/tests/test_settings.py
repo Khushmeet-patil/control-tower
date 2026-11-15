@@ -8,6 +8,7 @@ from app.modules.config.service import FieldService, SettingsService
 from app.modules.lookups.models import LookupType, LookupValue
 from app.modules.lookups.service import LookupTypeService, LookupValueService
 from app.modules.people.service import PersonService
+from seed.cli import AMBER
 from tests.conftest import person
 
 
@@ -137,7 +138,7 @@ def test_publish_rollback_and_discard(admin):
     make_list(admin, "risk", "Risk")
     assert settings.status()["has_changes"]
     settings.discard()
-    assert value("priority", "high").color == "#B54708"
+    assert value("priority", "high").color == AMBER  # seeded colour restored
     assert lookup("risk").is_active is False  # created after the live version: retired, not deleted
     assert not settings.status()["has_changes"]
 

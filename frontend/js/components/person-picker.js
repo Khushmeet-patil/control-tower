@@ -1,7 +1,7 @@
 /**
  * Search-as-you-type person selector (searches /people within the user's scope).
  *
- * const picker = createPersonPicker({ value: { id, full_name } | null, placeholder, onChange });
+ * const picker = createPersonPicker({ value: { id, full_name } | null, placeholder, onChange, disabled });
  * picker.getValue() → id | null
  */
 import { api } from '../core/api.js';
@@ -9,14 +9,14 @@ import { icon } from '../core/icons.js';
 import { clear, debounce, el } from '../core/utils.js';
 import { createAvatar } from './person.js';
 
-export function createPersonPicker({ value = null, placeholder = 'Search people…', onChange, id, exclude = [] } = {}) {
+export function createPersonPicker({ value = null, placeholder = 'Search people…', onChange, id, exclude = [], disabled = false } = {}) {
   let selected = value;
   let results = [];
   let active = -1;
 
   const input = el('input', { class: 'ct-input', type: 'search', placeholder, autocomplete: 'off', id, role: 'combobox', 'aria-expanded': 'false' });
   const list = el('div', { class: 'ct-picker__list ct-hidden', role: 'listbox' });
-  const element = el('div', { class: 'ct-picker' });
+  const element = el('div', { class: `ct-picker${disabled ? ' is-disabled' : ''}` });
 
   function choose(person) {
     selected = person;
@@ -81,16 +81,46 @@ export function createPersonPicker({ value = null, placeholder = 'Search people�
       element.append(el('div', { class: 'ct-picker__selected' },
         createAvatar(selected, { small: true }),
         el('span', { class: 'ct-tree__label' }, selected.full_name),
-        el('button', {
+        disabled ? null : el('button', {
           class: 'ct-btn ct-btn--ghost ct-btn--sm ct-btn--icon', type: 'button', 'aria-label': `Remove ${selected.full_name}`,
           onClick: () => { choose(null); setTimeout(() => input.focus(), 0); },
         }, icon('close', { size: 14 }))));
     } else {
       input.value = '';
+      input.disabled = disabled;
       element.append(input, list);
     }
   }
 
   render();
   return { element, getValue: () => selected?.id ?? null, focus: () => input.focus() };
+}
+
+/**
+ * Several people: chips plus a search box to add more.
+ * createPeoplePicker({ value: [{ id, full_name }] }) → { element, getValue() → [ids] }
+ */
+export function createPeoplePicker({ value = [], placeholder = 'Add a person…', id, disabled = false } = {}) {
+  let people = [...value];
+  const chips = el('div', { class: 'ct-tag-list' });
+  const slot = el('div');
+  const element = el('div', { class: `ct-people-picker${disabled ? ' is-disabled' : ''}` }, chips, slot);
+
+  function render() {
+    chips.replaceChildren(...people.map((p) => el('span', { class: 'ct-chip' },
+      createAvatar(p, { small: true }), p.full_name,
+      disabled ? null : el('button', {
+        class: 'ct-chip__remove', type: 'button', 'aria-label': `Remove ${p.full_name}`,
+        onClick: () => { people = people.filter((x) => x.id !== p.id); render(); },
+      }, icon('close', { size: 12 })))));
+    if (disabled) { slot.replaceChildren(); return; }
+    const picker = createPersonPicker({
+      id, placeholder, exclude: people.map((p) => p.id),
+      onChange: (p) => { if (p && !people.some((x) => x.id === p.id)) people.push(p); render(); setTimeout(() => picker.focus(), 0); },
+    });
+    slot.replaceChildren(picker.element);
+  }
+
+  render();
+  return { element, getValue: () => people.map((p) => p.id) };
 }

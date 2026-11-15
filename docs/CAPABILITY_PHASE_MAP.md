@@ -4,7 +4,7 @@ This file maps each Control Tower capability to the modules that deliver it and 
 
 - **Capabilities 1–11** are the confirmed list (from `Capability  Modules of Control Tower.txt`).
 - **Capabilities 12–17** are additional requirements. They came out of `Ideation.md` and from gaps found while mapping 1–11.
-- **Phase status** matches the tracker in BUILD_PLAN.md: Phases 0–2 are done, Phase 3 is next.
+- **Phase status** matches the tracker in BUILD_PLAN.md: Phases 0–6 are done; 6A and 7 are next.
 
 ---
 
@@ -15,10 +15,10 @@ This file maps each Control Tower capability to the modules that deliver it and 
 | 0 | Foundation | Done | `core/` (BaseModel, CommandService, audit, errors, filters, pagination), `auth` | 1, 10 |
 | 1 | Organisation, people and access | Done | `organisation`, `people`, `access`, `audit` | 3, 4, 11 |
 | 2 | Lookups and settings | Done | `lookups`, `config` (terms, item types, custom fields, settings versions) | 9 |
-| 3 | Work items, ownership and delegation | Next | `work`, `assignments` | 1, 2, 3 |
-| 4 | Configurable approvals and validated progress | Not started | `workflows`, progress engine in `rules` | 4, 5, 9 |
-| 5 | Health rules, saved filters and Action Centre | Not started | `rules`, `views` | 4, 5, 6, 9 |
-| 6 | Personal home, team view and dashboards | Not started | `dashboards`, `views`, home and team pages | 4, 6, 11 |
+| 3 | Work items, ownership and delegation | Done | `work`, `assignments` | 1, 2, 3 |
+| 4 | Configurable approvals and validated progress | Done | `workflows`, progress engine in `rules` | 4, 5, 9 |
+| 5 | Health rules, saved filters and Action Centre | Done | `rules`, `views` | 4, 5, 6, 9 |
+| 6 | Personal home, team view and dashboards | Done | `dashboards`, `views`, home and team pages | 4, 6, 11 |
 | 6A | Capacity and availability *(added)* | Not started | `capacity` (new), extends `assignments` | 3, 4, 12 |
 | 7 | Tool Centre | Not started | `tools` | 8 |
 | 8 | Snapshots, exports and presentation | Not started | `snapshots`, `presentations` (new) | 7, 10 |

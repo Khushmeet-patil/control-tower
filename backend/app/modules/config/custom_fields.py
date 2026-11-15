@@ -80,8 +80,14 @@ def _clean_value(tenant_id, field, raw, existing):
     _fail(code, "Unsupported field type")
 
 
+def applicable_fields(tenant_id: int, entity_type: str, item_type_id: int | None = None) -> list[dict]:
+    """Published fields of an entity; for work items, only those that apply to `item_type_id`."""
+    return [f for f in published_fields(tenant_id, entity_type)
+            if item_type_id is None or not f.get("item_type_ids") or item_type_id in f["item_type_ids"]]
+
+
 def clean_custom_values(tenant_id: int, entity_type: str, incoming: dict | None, existing: dict | None, *,
-                        creating: bool, check_required: bool = True) -> dict:
+                        creating: bool, check_required: bool = True, item_type_id: int | None = None) -> dict:
     """Validate `incoming` (all or some fields) and return the cleaned values that were sent.
 
     On create, the result is the full set of values; on update it holds only the fields sent,
@@ -92,7 +98,7 @@ def clean_custom_values(tenant_id: int, entity_type: str, incoming: dict | None,
     if not isinstance(incoming, dict):
         raise ValidationFailed("Custom fields must be an object", {"field": "custom_fields"})
     existing = existing or {}
-    fields = {f["code"]: f for f in published_fields(tenant_id, entity_type)}
+    fields = {f["code"]: f for f in applicable_fields(tenant_id, entity_type, item_type_id)}
     unknown = set(incoming) - set(fields)
     if unknown:
         raise ValidationFailed("Unknown custom field", {"field": "custom_fields", "codes": sorted(unknown)})

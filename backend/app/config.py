@@ -31,6 +31,9 @@ class BaseConfig:
     SESSION_COOKIE_SAMESITE = "Lax"
     REMEMBER_COOKIE_HTTPONLY = True
 
+    # Dates such as "today" and "overdue" are worked out in this timezone, never in UTC.
+    TIMEZONE = os.getenv("TIMEZONE", "Asia/Kolkata")
+
     DEFAULT_PAGE_SIZE = 25
     MAX_PAGE_SIZE = 200
 

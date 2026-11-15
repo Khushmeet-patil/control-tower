@@ -26,6 +26,13 @@ const PATHS = {
   type: 'M5 6V4h14v2M12 4v16M9 20h6',
   versions: 'M12 8v4l3 2M3 12a9 9 0 1 0 9-9M3 4v4h4',
   upload: 'M12 16V4M7 9l5-5 5 5M4 20h16',
+  briefcase: 'M4 8h16v11H4zM9 8V5h6v3M4 13h16',
+  calendar: 'M4 6h16v14H4zM4 10h16M8 3v4M16 3v4',
+  target: 'M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18zM12 16a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM12 12h.01',
+  tasks: 'M10 6h10M10 12h10M10 18h10M4 6l1.5 1.5L8 5M4 12l1.5 1.5L8 11M4 18l1.5 1.5L8 17',
+  chart: 'M4 20V10M10 20V4M16 20v-7M22 20H2',
+  grid: 'M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM13 13h7v7h-7z',
+  flag: 'M5 21V4M5 4h11l-2 4 2 4H5',
 };
 
 export function icon(name, { size = 18, label } = {}) {
