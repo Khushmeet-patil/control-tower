@@ -16,7 +16,11 @@
       <div class="ct-card">
         <div class="ct-card__body">
           <h2 style="margin-bottom: 4px;">Sign in</h2>
-          <p class="ct-muted ct-small" style="margin-bottom: 24px;">Use your work email and password.</p>
+          <p class="ct-muted ct-small" style="margin-bottom: 24px;" id="login-intro">Use your work email and password.</p>
+          <div id="entra-block" class="ct-hidden" style="margin-bottom: 16px;">
+            <a id="entra-button" class="ct-btn ct-btn--block" href="/api/v1/auth/entra/login">Sign in with Microsoft</a>
+            <p class="ct-muted ct-small" id="entra-or" style="text-align: center; margin: 12px 0 0;">or use your password</p>
+          </div>
           <form id="login-form" novalidate>
             <div id="login-error" class="ct-form-error ct-hidden" role="alert" style="margin-bottom: 16px;"></div>
             <div class="ct-field">

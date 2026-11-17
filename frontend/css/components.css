@@ -380,3 +380,139 @@ a.ct-kpi, button.ct-kpi { border: 0; text-align: left; cursor: pointer; color: i
 .ct-matrix th, .ct-matrix td { padding-left: var(--ct-space-2); padding-right: var(--ct-space-2); text-align: center; }
 .ct-matrix th:first-child, .ct-matrix td:first-child { text-align: left; }
 .ct-matrix th .ct-badge { white-space: normal; }
+
+/* ---- capacity and demand (Phase 6A) */
+.ct-weeks { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(40px, 1fr); gap: 4px; }
+.ct-weeks__cell { display: block; text-align: center; font-size: var(--ct-text-xs); font-variant-numeric: tabular-nums; padding: 4px 0; border-radius: var(--ct-radius); color: var(--ct-text); background: color-mix(in srgb, var(--cell-color, var(--ct-border)) 22%, var(--ct-surface)); border-bottom: 2px solid var(--cell-color, var(--ct-border)); }
+.ct-weeks__cell.is-on_leave { color: var(--ct-text-muted); font-style: italic; }
+.ct-weeks-head { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(40px, 1fr); gap: 4px; font-size: var(--ct-text-xs); color: var(--ct-text-muted); text-align: center; }
+.ct-verdict { padding: var(--ct-space-3); border-radius: var(--ct-radius); font-weight: var(--ct-weight-semibold); border-left: 3px solid currentColor; background: var(--ct-surface-muted); }
+.ct-verdict.is-fits { color: var(--ct-success); }
+.ct-verdict.is-shortfall { color: var(--ct-danger); }
+.ct-verdict.is-not_estimated { color: var(--ct-warning); }
+.ct-suggestions { display: flex; flex-direction: column; gap: 6px; margin-top: var(--ct-space-2); }
+.ct-suggestion { display: grid; grid-template-columns: 1fr 140px auto; gap: var(--ct-space-3); align-items: center; padding: 6px 8px; border-radius: var(--ct-radius); background: var(--ct-surface-muted); }
+
+/* ---------- Tools (Tool Centre, item Tools tab) ---------- */
+.ct-tool-grid { display: grid; gap: var(--ct-space-4); grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); }
+.ct-tool-card { padding: var(--ct-space-4); display: flex; flex-direction: column; gap: var(--ct-space-2); }
+.ct-tool-card__head { display: flex; align-items: center; gap: var(--ct-space-3); }
+.ct-tool-card__icon {
+  width: 40px; height: 40px; flex: none; display: inline-grid; place-items: center; font-size: 20px;
+  border-radius: var(--ct-radius); background: var(--ct-accent-soft);
+}
+.ct-tool-card__title { display: flex; flex-direction: column; min-width: 0; }
+.ct-tool-card__title strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ct-tool-card__desc { margin: 0; font-size: var(--ct-text-sm); color: var(--ct-text-muted); }
+.ct-tool-card__actions { margin-top: auto; padding-top: var(--ct-space-2); display: flex; align-items: center; gap: var(--ct-space-2); flex-wrap: wrap; }
+.ct-tool-score { display: inline-block; padding: 2px 8px; border-radius: var(--ct-radius-pill); font-size: var(--ct-text-xs); font-weight: var(--ct-weight-semibold); }
+.ct-tool-score.is-pass { background: var(--ct-success-soft); color: var(--ct-success); }
+.ct-tool-score.is-fail { background: var(--ct-warning-soft); color: var(--ct-warning); }
+.ct-tool-score.is-none { background: var(--ct-surface-muted); color: var(--ct-text-muted); }
+
+/* ---------- Presentations (editor page rows, presenter) ---------- */
+.ct-page-row { padding: var(--ct-space-3); border-radius: var(--ct-radius); background: var(--ct-surface-muted); display: flex; flex-direction: column; gap: var(--ct-space-2); }
+.ct-page-row__head { display: grid; grid-template-columns: auto minmax(140px, 1fr) minmax(140px, 1.4fr) auto auto auto; gap: var(--ct-space-2); align-items: center; }
+@media (max-width: 720px) { .ct-page-row__head { grid-template-columns: 1fr 1fr; } }
+.ct-present { display: flex; flex-direction: column; gap: var(--ct-space-4); outline: none; }
+.ct-present:fullscreen { background: var(--ct-bg); padding: var(--ct-space-6); overflow: auto; }
+.ct-present__bar { display: flex; justify-content: space-between; align-items: flex-start; gap: var(--ct-space-4); flex-wrap: wrap; }
+.ct-present__heading { display: flex; flex-direction: column; gap: var(--ct-space-2); }
+.ct-present__title { margin: 0; font-size: var(--ct-text-2xl); }
+.ct-present__controls { display: flex; align-items: center; gap: var(--ct-space-1); }
+.ct-present:fullscreen .ct-widget__kpi b { font-size: 56px; }
+.ct-present__notes { padding: var(--ct-space-4); border-radius: var(--ct-radius-lg); background: var(--ct-surface); box-shadow: var(--ct-shadow-raised); }
+.ct-present__notes .ct-section-title { margin-top: 0; }
+
+/* ---------- Data & Backup, notices above the page ---------- */
+.ct-notices:empty { display: none; }
+.ct-notices { padding: var(--ct-space-4) var(--ct-space-5) 0; width: 100%; max-width: var(--ct-content-max); margin: 0 auto; display: flex; flex-direction: column; gap: var(--ct-space-2); }
+.ct-notice--warning { background: var(--ct-warning-soft); border-left-color: var(--ct-warning); }
+.ct-steps { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: var(--ct-space-4); align-items: end; }
+.ct-outcome { font-weight: var(--ct-weight-semibold); font-size: var(--ct-text-xs); }
+.ct-error-list { margin: 0; padding-left: var(--ct-space-4); color: var(--ct-danger); }
+.ct-help { max-width: 820px; }
+.ct-help h2 { margin-top: var(--ct-space-6); }
+.ct-help p, .ct-help li { line-height: 1.6; }
+
+/* ---------- Phase 10: notifications bell ---------- */
+.ct-bell-wrap { position: relative; }
+.ct-bell { position: relative; }
+.ct-bell__count { position: absolute; top: 2px; right: 0; min-width: 18px; height: 18px; padding: 0 5px; border-radius: var(--ct-radius-pill); background: var(--ct-danger); color: var(--ct-on-accent); font-size: 10px; font-weight: var(--ct-weight-semibold); display: inline-grid; place-items: center; }
+.ct-bell__panel { position: absolute; right: 0; top: calc(100% + 6px); width: min(380px, calc(100vw - 32px)); background: var(--ct-surface); border: 1px solid var(--ct-border); border-radius: var(--ct-radius-lg); box-shadow: var(--ct-shadow-lg); z-index: 30; display: flex; flex-direction: column; max-height: 70vh; }
+.ct-bell__head { display: flex; justify-content: space-between; align-items: center; padding: var(--ct-space-3); border-bottom: 1px solid var(--ct-border); }
+.ct-bell__list { overflow-y: auto; }
+.ct-bell__all { padding: var(--ct-space-3); text-align: center; border-top: 1px solid var(--ct-border); font-size: var(--ct-text-sm); }
+.ct-notification { display: flex; gap: var(--ct-space-3); align-items: flex-start; padding: var(--ct-space-3); border-bottom: 1px solid var(--ct-border); }
+.ct-notification:last-child { border-bottom: 0; }
+.ct-notification__dot { width: 8px; height: 8px; border-radius: 50%; margin-top: 6px; flex: none; background: transparent; }
+.ct-notification.is-unread .ct-notification__dot { background: var(--ct-accent); }
+.ct-notification.is-unread .ct-notification__title { font-weight: var(--ct-weight-semibold); }
+.ct-notification__body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.ct-notification__title { color: var(--ct-text); font-weight: var(--ct-weight-medium); }
+.ct-notification__text { margin: 0; color: var(--ct-text-muted); font-size: var(--ct-text-sm); white-space: pre-line; }
+.ct-notification.is-compact { padding: var(--ct-space-2) var(--ct-space-3); }
+
+/* ---------- Phase 10: settings tables, secrets, scenarios ---------- */
+.ct-pref-table td, .ct-pref-table th { text-align: center; }
+.ct-pref-table td:first-child, .ct-pref-table th:first-child { text-align: left; }
+.ct-secret { font-family: var(--ct-font-mono); font-size: var(--ct-text-sm); padding: var(--ct-space-3); background: var(--ct-surface-muted); border-radius: var(--ct-radius); word-break: break-all; user-select: all; }
+.ct-status-pill { display: inline-block; padding: 2px 8px; border-radius: var(--ct-radius-pill); font-size: var(--ct-text-xs); font-weight: var(--ct-weight-semibold); background: var(--ct-surface-muted); color: var(--ct-text-muted); }
+.ct-status-pill.is-good { background: var(--ct-success-soft); color: var(--ct-success); }
+.ct-status-pill.is-bad { background: var(--ct-danger-soft); color: var(--ct-danger); }
+.ct-status-pill.is-warn { background: var(--ct-warning-soft); color: var(--ct-warning); }
+.ct-delta { font-weight: var(--ct-weight-semibold); }
+.ct-delta.is-up { color: var(--ct-danger); }
+.ct-delta.is-down { color: var(--ct-success); }
+.ct-week-grid { overflow-x: auto; }
+.ct-week-grid table { border-collapse: collapse; font-size: var(--ct-text-xs); }
+.ct-week-grid th, .ct-week-grid td { padding: 4px 6px; text-align: center; border-bottom: 1px solid var(--ct-border); white-space: nowrap; }
+.ct-week-grid td:first-child, .ct-week-grid th:first-child { text-align: left; position: sticky; left: 0; background: var(--ct-surface); }
+.ct-week-cell { display: inline-block; min-width: 54px; border-radius: var(--ct-radius-sm); padding: 2px 4px; }
+.ct-week-cell.is-overloaded { background: var(--ct-danger-soft); color: var(--ct-danger); }
+.ct-week-cell.is-on_leave { background: var(--ct-surface-muted); color: var(--ct-text-muted); }
+.ct-week-cell.is-underutilised { background: var(--ct-warning-soft); color: var(--ct-warning); }
+.ct-week-cell.is-balanced { background: var(--ct-success-soft); color: var(--ct-success); }
+
+/* ---------- Phase 10: template outline editor ---------- */
+.ct-outline { display: flex; flex-direction: column; gap: 6px; }
+.ct-outline__row { display: grid; grid-template-columns: minmax(0, 1fr) 150px 90px 90px auto; gap: 6px; align-items: center; }
+.ct-outline__title { display: flex; align-items: center; gap: 6px; }
+.ct-outline__actions { display: flex; gap: 2px; }
+@media (max-width: 860px) {
+  .ct-outline__row { grid-template-columns: minmax(0, 1fr) 110px; }
+  .ct-outline__row > :nth-child(3), .ct-outline__row > :nth-child(4) { display: none; }
+}
+
+/* ---------- Phase 10: drag and drop ---------- */
+.ct-board__card[draggable="true"] { cursor: grab; }
+.ct-board__card.is-dragging { opacity: 0.5; }
+.ct-board__col.is-drop-target { outline: 2px dashed var(--ct-accent); outline-offset: -2px; }
+.ct-widget[draggable="true"] .ct-widget__handle { cursor: grab; }
+.ct-widget.is-dragging { opacity: 0.5; }
+.ct-widget.is-drop-target { outline: 2px dashed var(--ct-accent); outline-offset: 2px; }
+.ct-widget__handle { border: 0; background: none; color: var(--ct-text-subtle); cursor: grab; padding: 2px; display: inline-grid; place-items: center; }
+
+/* ---------- Phase 10: Gantt ---------- */
+.ct-gantt { display: flex; flex-direction: column; gap: var(--ct-space-2); }
+.ct-gantt__bar-controls { display: flex; gap: var(--ct-space-2); align-items: center; flex-wrap: wrap; }
+.ct-gantt__scroll { overflow-x: auto; border-radius: var(--ct-radius); }
+.ct-gantt__inner { position: relative; }
+.ct-gantt__head { display: flex; position: sticky; top: 0; font-size: var(--ct-text-xs); color: var(--ct-text-muted); }
+.ct-gantt__label-col { width: 220px; flex: none; position: sticky; left: 0; background: var(--ct-surface); z-index: 2; }
+.ct-gantt__ticks { position: relative; height: 22px; flex: none; }
+.ct-gantt__tick { position: absolute; top: 0; height: 100%; border-left: 1px solid var(--ct-border); padding-left: 4px; white-space: nowrap; }
+.ct-gantt__row { display: flex; align-items: center; height: 28px; }
+.ct-gantt__name { width: 220px; flex: none; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: var(--ct-text-xs); position: sticky; left: 0; background: var(--ct-surface); z-index: 2; padding-right: 8px; }
+.ct-gantt__track { position: relative; height: 28px; flex: none; }
+.ct-gantt__bar { position: absolute; top: 7px; height: 14px; border-radius: var(--ct-radius-pill); background: var(--bar-color, var(--ct-accent)); min-width: 6px; }
+.ct-gantt__bar.is-milestone { width: 12px !important; height: 12px; top: 8px; border-radius: 2px; transform: rotate(45deg); }
+.ct-gantt__bar.is-late { box-shadow: 0 0 0 2px var(--ct-danger); }
+.ct-gantt__progress { position: absolute; left: 0; top: 0; bottom: 0; border-radius: inherit; background: var(--ct-text); opacity: 0.22; }
+.ct-gantt__today { position: absolute; top: 0; bottom: 0; width: 2px; background: var(--ct-danger); z-index: 1; pointer-events: none; }
+.ct-gantt__links { position: absolute; left: 0; top: 0; pointer-events: none; overflow: visible; color: var(--ct-text-subtle); }
+.ct-gantt__links path { fill: none; stroke: var(--ct-text-subtle); stroke-width: 1.4; }
+.ct-gantt__links path.is-clash { stroke: var(--ct-danger); }
+@media (max-width: 860px) {
+  .ct-gantt__label-col, .ct-gantt__name { width: 120px; }
+}

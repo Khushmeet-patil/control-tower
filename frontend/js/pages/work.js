@@ -52,6 +52,12 @@ const personNames = {};
 // ------------------------------------------------------------------ state
 const url = new URLSearchParams(location.search);
 let extra = {};          // filters without a dropdown (drill-downs and saved views)
+
+/** The list as on screen (same Portfolio filters as the URL) as an Excel file. */
+function exportExcel() {
+  const values = Object.entries({ ...extra, ...filters.getValues() }).filter(([, v]) => v !== null && v !== undefined && v !== '');
+  window.location.href = `/api/v1/exports/work-items.xlsx?${new URLSearchParams(values)}`;
+}
 let layout = url.get('layout') === 'board' ? 'board' : 'list';
 let views = [];
 let currentView = Number(url.get('view')) || null;
@@ -118,6 +124,20 @@ function personName(id) {
 }
 
 // ------------------------------------------------------------------ board
+let dragged = null;
+
+/** Dropping a card on another column changes its status, through the same checks as the edit form
+ *  (permissions, status flow rules, approvals when it becomes Done). */
+async function moveCard(item, status, query) {
+  dragged = null;
+  if (!item || item.status_id === status.id) return;
+  try {
+    await api.patch(`/work-items/${item.id}`, { status_id: status.id, version: item.version, reason: 'Moved on the board' });
+    showToast(`${item.code} is now ${status.label}`, 'success');
+  } catch (err) { showError(err); }
+  renderBoard(query);
+}
+
 async function renderBoard(query) {
   boardSlot.replaceChildren(el('p', { class: 'ct-muted', style: { padding: '16px' } }, 'Loading…'));
   try {
@@ -127,9 +147,15 @@ async function renderBoard(query) {
       .filter((c) => c.items.length || c.s.is_active);
     boardSlot.replaceChildren(...[
       data.total > data.items.length ? el('p', { class: 'ct-muted ct-small', style: { padding: '8px 16px 0' } }, `Showing the first ${data.items.length} of ${data.total}; narrow the filters to see the rest.`) : null,
-      el('div', { class: 'ct-board' }, columns.map(({ s, items }) => el('section', { class: 'ct-board__col', 'aria-label': s.label },
+      el('div', { class: 'ct-board' }, columns.map(({ s, items }) => el('section', { class: 'ct-board__col', 'aria-label': s.label, dataset: { status: s.id },
+        onDragover: (e) => { if (dragged && dragged.status_id !== s.id) { e.preventDefault(); e.currentTarget.classList.add('is-drop-target'); } },
+        onDragleave: (e) => e.currentTarget.classList.remove('is-drop-target'),
+        onDrop: (e) => { e.preventDefault(); e.currentTarget.classList.remove('is-drop-target'); moveCard(dragged, s, query); } },
         el('div', { class: 'ct-board__head' }, el('span', {}, el('span', { class: 'ct-dot', style: { background: s.color, marginRight: '6px' } }), s.label), el('span', { class: 'ct-muted' }, String(items.length))),
-        items.map((i) => el('a', { class: `ct-board__card${i.is_overdue ? ' is-late' : ''}`, href: itemUrl(i) },
+        items.map((i) => el('a', { class: `ct-board__card${i.is_overdue ? ' is-late' : ''}`, href: itemUrl(i), draggable: 'true',
+          title: 'Drag to another column to change its status',
+          onDragstart: (e) => { dragged = i; e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', i.code); e.currentTarget.classList.add('is-dragging'); },
+          onDragend: (e) => { e.currentTarget.classList.remove('is-dragging'); } },
           el('div', { class: 'ct-detail-head' }, el('span', { class: 'ct-work-title__code' }, i.code), healthBadge(i.health)),
           el('strong', {}, i.title),
           el('div', { class: 'ct-detail-head ct-small ct-muted' },
@@ -235,7 +261,8 @@ async function loadKpis() {
 }
 
 content.append(
-  pageHeader('Portfolio', `Every ${term('work_item', { fallback: 'work item' }).toLowerCase()} you can see, with its health. Hover a health badge for the reason; open an item for the full explanation.`),
+  pageHeader('Portfolio', `Every ${term('work_item', { fallback: 'work item' }).toLowerCase()} you can see, with its health. Hover a health badge for the reason; open an item for the full explanation.`,
+    [el('button', { class: 'ct-btn', title: 'Download this list, with the current filters, as an Excel file', onClick: exportExcel }, 'Export to Excel')]),
   kpiSlot,
   el('section', { class: 'ct-card' }, viewBar, filters.element, extraNotice, table.element, boardSlot),
 );

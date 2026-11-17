@@ -16,6 +16,7 @@ Nothing is stored: health is recalculated on every read, so it always matches th
 """
 from dataclasses import dataclass, field
 
+from flask import g, has_request_context
 from sqlalchemy import func, select
 
 from app.core.dates import today
@@ -107,9 +108,14 @@ class Context:
         self._loads = None
         self._names = {}
         self._helpers = {}
+        self._usable = {}
+        self._status_ids = {}
 
     def status_id(self, code):
-        return published_value_id(self.tenant_id, "status", code)
+        # Called for every item (e.g. "cancelled" children): look each code up once per run.
+        if code not in self._status_ids:
+            self._status_ids[code] = published_value_id(self.tenant_id, "status", code)
+        return self._status_ids[code]
 
     def label(self, value_id):
         return self.labels.get(value_id, "")
@@ -146,6 +152,14 @@ class Context:
             people = ({r.accountable_id for r in self.rows.values()} | {person_id}) - set(self._loads)
             self._loads.update({p: v["pct"] for p, v in allocation_load(self.tenant_id, people).items()})
         return self._loads.get(person_id, 0)
+
+    def usable(self, person_id, buffer):
+        """Usable capacity % today: the person's working capacity (part time, time off) less the buffer."""
+        if person_id not in self._usable:
+            from app.modules.capacity.engine import people_now
+
+            self._usable[person_id] = people_now(self.tenant_id, [person_id], 0)[person_id]["available_pct"]
+        return round(self._usable[person_id] * (100 - buffer) / 100)
 
     def helpers(self, row):
         """People who could help finish an item: its assignees and responsible owners, and the people of its unit."""
@@ -195,9 +209,19 @@ class Context:
 
 
 def _load_rows(tenant_id, root_ids):
+    """The items and everything below them, as plain rows (the rules only read columns). Loading full ORM
+    objects cost half of the evaluation time on large portfolios."""
     ids = select(WorkItemClosure.descendant_id).where(WorkItemClosure.ancestor_id.in_(list(root_ids)))
-    return db.session.scalars(select(WorkItem).where(WorkItem.id.in_(ids), WorkItem.tenant_id == tenant_id,
-                                                     WorkItem.is_deleted.is_(False))).all()
+    return db.session.execute(select(*WorkItem.__table__.columns).where(
+        WorkItem.id.in_(ids), WorkItem.tenant_id == tenant_id, WorkItem.is_deleted.is_(False))).all()
+
+
+def _request_cache(tenant_id):
+    """Results already worked out in this request. An item's health depends only on its own subtree,
+    so results can be shared between calls. Cleared by every write (CommandService)."""
+    if not has_request_context():
+        return None
+    return g.setdefault("_health_cache", {}).setdefault(tenant_id, {})
 
 
 def _applies(rule, row):
@@ -239,6 +263,10 @@ def evaluate(tenant_id: int, root_ids) -> dict[int, HealthResult]:
     root_ids = {int(i) for i in root_ids}
     if not root_ids:
         return {}
+    cache = _request_cache(tenant_id)
+    if cache is not None and root_ids <= cache.keys():
+        below = db.session.scalars(select(WorkItemClosure.descendant_id).where(WorkItemClosure.ancestor_id.in_(list(root_ids))))
+        return {i: cache[i] for i in below if i in cache}
     rows = _load_rows(tenant_id, root_ids)
     ctx = Context(tenant_id, rows)
     rules = published_rules(tenant_id)
@@ -277,6 +305,8 @@ def evaluate(tenant_id: int, root_ids) -> dict[int, HealthResult]:
     for root in root_ids:
         if root in ctx.rows:
             compute(root)
+    if cache is not None:
+        cache.update(results)
     return results
 
 

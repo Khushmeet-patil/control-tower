@@ -9,7 +9,8 @@ from app.core.permissions import actor_can
 from app.core.tree import descendant_ids
 from app.extensions import db
 from app.modules.access.models import Role, UserRole
-from app.modules.access.scope import clear_access_cache, is_global, managed_unit_ids, person_visibility_clause
+from app.modules.access.scope import (clear_access_cache, ensure_within_own_access, is_global, managed_unit_ids,
+                                     person_visibility_clause)
 from app.modules.auth.models import User
 from app.modules.config.custom_fields import apply_custom_filters, person_refs
 from app.modules.organisation.models import Function, FunctionClosure, OrgUnit, OrgUnitClosure
@@ -19,7 +20,7 @@ MIN_PASSWORD = 8
 FILTERABLE = {
     "full_name": User.full_name, "email": User.email, "job_title": User.job_title,
     "unit_id": User.unit_id, "function_id": User.function_id, "manager_id": User.manager_id,
-    "is_active": User.is_active, "updated_at": User.updated_at,
+    "is_active": User.is_active, "updated_at": User.updated_at, "capacity_pct": User.capacity_pct,
 }
 SEARCH = [User.full_name, User.email, User.job_title, User.employee_code]
 
@@ -32,7 +33,8 @@ class PersonService(CommandService):
     model = User
     entity_type = "person"
     permissions = {"create": "people.manage", "update": "people.manage", "delete": "people.manage"}
-    protected_fields = frozenset({"password_hash", "last_login_at"})
+    protected_fields = frozenset({"password_hash", "last_login_at", "failed_logins", "locked_until",
+                                  "notification_prefs", "entra_oid"})
     extra_fields = frozenset({"role_ids"})
     custom_entity = "person"
 
@@ -70,6 +72,8 @@ class PersonService(CommandService):
             "roles": [{"id": r.id, "name": r.name} for r in self._roles_of(u.id)],
             "role_ids": self.read_value(u, "role_ids"),
             "is_admin": u.is_admin, "is_active": u.is_active,
+            "skill_ids": u.skill_ids or [], "capacity_pct": u.capacity_pct, "backlog_days": u.backlog_days,
+            "work_days": u.work_days or [0, 1, 2, 3, 4],
             "custom_fields": u.custom_fields or {},
             "custom_people": person_refs(self.tenant_id, self.custom_entity, u.custom_fields),
             "last_login_at": u.last_login_at.isoformat() if u.last_login_at else None,
@@ -114,14 +118,17 @@ class PersonService(CommandService):
             seen.add(current)
             current = db.session.scalar(select(User.manager_id).where(User.id == current))
 
-    def _check_roles(self, role_ids):
+    def _check_roles(self, role_ids, current=()):
         if not actor_can(self.actor, "roles.manage"):
             raise Forbidden("You do not have permission to assign roles")
         ids = set(role_ids or [])
-        found = set(db.session.scalars(select(Role.id).where(
-            Role.id.in_(ids), Role.tenant_id == self.tenant_id, Role.is_deleted.is_(False))))
-        if found != ids:
+        roles = db.session.scalars(select(Role).where(
+            Role.id.in_(ids), Role.tenant_id == self.tenant_id, Role.is_deleted.is_(False))).all()
+        if {r.id for r in roles} != ids:
             raise ValidationFailed("Unknown role selected", {"field": "role_ids"})
+        for role in roles:
+            if role.id not in current:  # roles someone already has may stay; only new ones are checked
+                ensure_within_own_access(self.actor, role.permission_codes, role.scope, f"the role “{role.name}”")
 
     def _check_admin_flag(self):
         if self.actor is not None and not self.actor.is_admin:
@@ -144,10 +151,38 @@ class PersonService(CommandService):
             default = db.session.scalar(select(Role.id).where(
                 Role.tenant_id == self.tenant_id, Role.is_default.is_(True), Role.is_deleted.is_(False)))
             data["role_ids"] = [default] if default else []
+        self._check_capacity(data)
         if data.get("is_admin"):
             self._check_admin_flag()
 
+    def _check_capacity(self, data, obj=None):
+        """Skills come from the "skill" list (a retired skill may stay on someone who already has it);
+        an empty capacity means full time."""
+        if "skill_ids" in data:
+            from app.modules.config.versioning import published_list
+
+            ids = sorted({int(i) for i in data["skill_ids"] or []})
+            skills, kept = published_list(self.tenant_id, "skill"), set((obj.skill_ids or []) if obj else [])
+            if any(i not in skills or (not skills[i]["is_active"] and i not in kept) for i in ids):
+                raise ValidationFailed("Choose skills from the Skill list", {"field": "skill_ids"})
+            data["skill_ids"] = ids or None
+            if obj is not None and data["skill_ids"] == (sorted(obj.skill_ids) if obj.skill_ids else None):
+                data.pop("skill_ids")
+        if "work_days" in data:  # weekdays worked, 0 = Monday; Monday to Friday is stored as empty
+            days = sorted({int(d) for d in data["work_days"] or []})
+            if any(d < 0 or d > 6 for d in days):
+                raise ValidationFailed("Working days are weekdays 0 (Monday) to 6 (Sunday)", {"field": "work_days"})
+            data["work_days"] = None if days in ([], [0, 1, 2, 3, 4]) else days
+            if obj is not None and data["work_days"] == obj.work_days:
+                data.pop("work_days")
+        if "capacity_pct" in data and data["capacity_pct"] is None:
+            if obj is None:
+                data.pop("capacity_pct")
+            else:
+                data["capacity_pct"] = 100
+
     def validate_update(self, obj, changes):
+        self._check_capacity(changes, obj)
         if "email" in changes:
             changes["email"] = changes["email"].strip().lower()
             if db.session.scalar(select(User.id).where(User.email == changes["email"], User.id != obj.id)):
@@ -164,7 +199,7 @@ class PersonService(CommandService):
         if "role_ids" in changes:
             changes["role_ids"] = sorted(set(changes["role_ids"] or []))
             if changes["role_ids"] != self.read_value(obj, "role_ids"):
-                self._check_roles(changes["role_ids"])
+                self._check_roles(changes["role_ids"], current=set(self.read_value(obj, "role_ids")))
         if "is_admin" in changes and changes["is_admin"] != obj.is_admin:
             self._check_admin_flag()
         is_self = self.actor is not None and obj.id == self.actor.id

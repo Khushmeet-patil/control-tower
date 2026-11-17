@@ -62,6 +62,18 @@ def complete_item(item_id):
     return WorkItemService(current_user).detail(item_id)
 
 
+@bp.get("/work-items/dependencies")
+@require_permission("work.view")
+def dependencies():
+    """Dependency links among the given items (?ids=1,2,3), for the Gantt chart. Only links whose two
+    ends the viewer may see are returned."""
+    try:
+        ids = [int(i) for i in (request.args.get("ids") or "").split(",") if i][:500]
+    except ValueError as exc:
+        raise ValidationFailed("ids must be numbers", {"field": "ids"}) from exc
+    return {"items": WorkItemService(current_user).dependency_links(ids)}
+
+
 @bp.get("/work-items/rollup")
 @require_permission("work.view")
 def rollup():

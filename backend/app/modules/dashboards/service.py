@@ -18,7 +18,7 @@ from app.modules.work.progress import progress_map, weighted_average
 from app.modules.work.service import WorkItemService, person_ref, portfolio_params
 
 MAX_WIDGETS, MAX_FILTERS, MAX_LIMIT = 24, 30, 50
-DEFAULT_LIMIT = {"table": 8, "progress": 10, "timeline": 20}
+DEFAULT_LIMIT = {"table": 8, "progress": 10, "timeline": 20, "capacity": 12}
 
 
 def _clean_filters(filters, where):
@@ -172,6 +172,13 @@ def widget_data(actor, widget) -> dict:
 
         return {"entries": action_centre(actor)["top"]}
     filters = effective_filters(widget)
+    if kind == "capacity":  # people, not work: only the unit filter applies
+        from app.modules.capacity.service import find_people
+
+        found = find_people(actor, {"unit_id": filters.get("unit_id")})
+        rows = sorted(found["items"], key=lambda r: (-r["load_pct"], r["person"]["full_name"]))
+        return {"filters": {}, "total": len(rows), "items": rows[: widget.get("limit") or 12],
+                "free_pct": sum(r["free_pct"] for r in rows), "buffer_pct": found["buffer_pct"]}
     params = portfolio_params(filters)
     work = WorkItemService(actor)
     base = {"filters": filters, "total": work.count(params)}

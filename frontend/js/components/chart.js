@@ -56,3 +56,32 @@ export function createChart({ type = 'bar', labels, values, colors = [], onClick
   }).catch(() => wrap.replaceChildren(el('p', { class: 'ct-muted ct-small' }, 'The chart could not be drawn.')));
   return wrap;
 }
+
+/**
+ * Line chart with several series (trends over snapshots):
+ *   createLineChart({ labels, series: [{ label: 'Overdue', values: [...], color: 'var(--ct-danger)' }], onClick })
+ */
+export function createLineChart({ labels, series, onClick, height = 240, yMax = null }) {
+  const canvas = el('canvas', { role: 'img', 'aria-label': series.map((s) => `${s.label}: ${s.values.join(', ')}`).join('; ') });
+  const wrap = el('div', { class: 'ct-chart', style: { height: `${height}px` } }, canvas);
+  loadChartJs().then((Chart) => {
+    const text = cssColor('var(--ct-text-muted)');
+    const grid = cssColor('var(--ct-border)');
+    // eslint-disable-next-line no-new
+    new Chart(canvas, {
+      type: 'line',
+      data: { labels, datasets: series.map((s) => ({ label: s.label, data: s.values, borderColor: cssColor(s.color),
+        backgroundColor: cssColor(s.color), tension: 0.25, pointRadius: 3, borderWidth: 2 })) },
+      options: {
+        responsive: true, maintainAspectRatio: false, animation: false,
+        plugins: { legend: { position: 'bottom', labels: { color: text, boxWidth: 12 } } },
+        scales: {
+          x: { ticks: { color: text }, grid: { display: false } },
+          y: { ticks: { color: text, precision: 0 }, grid: { color: grid }, beginAtZero: true, ...(yMax ? { max: yMax } : {}) },
+        },
+        onClick: onClick ? (_, elements) => { if (elements.length) onClick(elements[0].index); } : undefined,
+      },
+    });
+  }).catch(() => wrap.replaceChildren(el('p', { class: 'ct-muted ct-small' }, 'The chart could not be drawn.')));
+  return wrap;
+}

@@ -193,6 +193,7 @@ def advance(svc, request, item, start: int) -> None:
         if person is not None or role is not None:
             request.current_step, request.current_approver_id, request.current_role_id = index, person, role
             request.waiting_note = note
+            _tell_approvers(svc, request, item, step, person, role)
             return
         if step.get("when_missing", "skip") == "skip":
             _record(svc, request, index, "skipped", comment=note or "Nobody to ask for this step")
@@ -208,6 +209,27 @@ def advance(svc, request, item, start: int) -> None:
     _event(svc, "approval_request", request.id, "complete", field="status", old="pending", new="approved")
     _set_item(svc, item, "approval_status", "approved", "All approvals given")
     _set_item(svc, item, "approved_at", request.completed_at, "All approvals given")
+    _tell_submitter(svc, request, item, f"{item.code} {item.title} was approved",
+                    "Every approval step is done; it now counts towards progress.")
+
+
+def _tell_approvers(svc, request, item, step, person, role):
+    from app.modules.notifications.service import item_link, notify
+
+    people = [person] if person is not None else list(db.session.scalars(
+        select(UserRole.user_id).join(User, User.id == UserRole.user_id).where(
+            UserRole.role_id == role, User.is_active.is_(True), User.is_deleted.is_(False))))
+    notify(svc.tenant_id, people, "approval_needed", f"Approve {item.code} {item.title}",
+           body=f"Step “{step['name']}” of {request.chain_name} is waiting for you.",
+           link=f"{item_link(item)}#approvals", entity=("work_item", item.id), actor=svc.actor,
+           source=svc.source)
+
+
+def _tell_submitter(svc, request, item, title, body):
+    from app.modules.notifications.service import item_link, notify
+
+    notify(svc.tenant_id, [request.submitted_by_id], "approval_decided", title, body=body, link=item_link(item),
+           entity=("work_item", item.id), actor=svc.actor, source=svc.source)
 
 
 def pending_request(item_id: int):
@@ -309,6 +331,7 @@ def decide(svc, request, *, approve: bool, comment: str | None, checklist: list[
     if back:
         _set_item(svc, item, "status_id", back, reason)
     _set_item(svc, item, "actual_end", None, reason)
+    _tell_submitter(svc, request, item, f"{item.code} {item.title} was sent back", reason)
     return request
 
 

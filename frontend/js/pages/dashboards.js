@@ -62,19 +62,20 @@ function render(data = null) {
   }
 
   const toolbar = editing ? el('div', { class: 'ct-notice ct-notice--quiet' },
-    el('span', { class: 'ct-notice__text' }, 'Editing: add, change, move or remove widgets. Changes are saved straight away.'),
+    el('span', { class: 'ct-notice__text' }, 'Editing: add, change or remove widgets, and drag them (or use the arrows) to move them. Changes are saved straight away.'),
     el('button', { class: 'ct-btn ct-btn--sm ct-btn--primary', onClick: () => editWidget(null) }, icon('plus', { size: 14 }), 'Add widget'),
     el('button', { class: 'ct-btn ct-btn--sm', onClick: () => editDashboard(current) }, 'Name & sharing'),
     el('button', { class: 'ct-btn ct-btn--sm ct-btn--danger', onClick: removeDashboard }, 'Delete dashboard')) : null;
 
-  const widgets = current.widgets.length ? el('div', { class: 'ct-widgets' }, current.widgets.map((w, i) => createWidget(w, data ? (data[w.id] || { error: 'No data' }) : null, {
+  const widgets = current.widgets.length ? el('div', { class: 'ct-widgets' }, current.widgets.map((w, i) => draggable(createWidget(w, data ? (data[w.id] || { error: 'No data' }) : null, {
     actions: editing ? [
+      el('span', { class: 'ct-widget__handle', title: 'Drag to move', 'aria-hidden': 'true' }, icon('grid', { size: 14 })),
       el('button', { class: 'ct-btn ct-btn--ghost ct-btn--sm', title: 'Move earlier', 'aria-label': 'Move earlier', disabled: i === 0, onClick: () => move(i, -1) }, icon('chevronLeft', { size: 14 })),
       el('button', { class: 'ct-btn ct-btn--ghost ct-btn--sm', title: 'Move later', 'aria-label': 'Move later', disabled: i === current.widgets.length - 1, onClick: () => move(i, 1) }, icon('chevronRight', { size: 14 })),
       el('button', { class: 'ct-btn ct-btn--ghost ct-btn--sm', title: 'Change', 'aria-label': 'Change widget', onClick: () => editWidget(i) }, icon('edit', { size: 14 })),
       el('button', { class: 'ct-btn ct-btn--ghost ct-btn--sm', title: 'Remove', 'aria-label': 'Remove widget', onClick: () => removeWidget(i) }, icon('trash', { size: 14 })),
     ] : [],
-  })))
+  }), i, editing)))
     : createEmptyState({ title: 'No widgets yet', icon: 'chart', message: current.can_edit ? 'Choose Edit, then Add widget.' : 'The owner has not added any widgets yet.' });
 
   content.replaceChildren(...[header, toolbar, widgets].filter(Boolean));
@@ -86,6 +87,29 @@ async function saveWidgets(widgets, reason) {
     current = await api.patch(`/dashboards/${current.id}`, { widgets, version: current.version, reason });
     await open(current.id);
   } catch (err) { showError(err); throw err; }
+}
+
+/** While editing, widgets can be dragged onto another widget's place (the arrow buttons do the same
+ *  from the keyboard). */
+let dragFrom = null;
+function draggable(node, i, editing) {
+  if (!editing) return node;
+  node.setAttribute('draggable', 'true');
+  node.addEventListener('dragstart', (e) => { dragFrom = i; e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', String(i)); node.classList.add('is-dragging'); });
+  node.addEventListener('dragend', () => { node.classList.remove('is-dragging'); dragFrom = null; });
+  node.addEventListener('dragover', (e) => { if (dragFrom !== null && dragFrom !== i) { e.preventDefault(); node.classList.add('is-drop-target'); } });
+  node.addEventListener('dragleave', () => node.classList.remove('is-drop-target'));
+  node.addEventListener('drop', (e) => {
+    e.preventDefault();
+    node.classList.remove('is-drop-target');
+    if (dragFrom === null || dragFrom === i) return;
+    const w = [...current.widgets];
+    const [moved] = w.splice(dragFrom, 1);
+    w.splice(i, 0, moved);
+    dragFrom = null;
+    saveWidgets(w, 'Widget moved').catch(() => {});
+  });
+  return node;
 }
 
 function move(i, step) {

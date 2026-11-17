@@ -6,11 +6,12 @@ Each person sits in BOTH hierarchies:
 - function_id  → functional hierarchy (their discipline)
 Roles (app.modules.access) decide what they may do; scope decides what they may see.
 """
+import hashlib
 from datetime import datetime
 
 from flask import current_app, g, has_request_context
 from flask_login import UserMixin
-from sqlalchemy import JSON, Boolean, DateTime, ForeignKey, String, UniqueConstraint
+from sqlalchemy import Integer, JSON, Boolean, DateTime, ForeignKey, String, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from werkzeug.security import check_password_hash, generate_password_hash
 
@@ -32,8 +33,23 @@ class User(UserMixin, BaseModel):
     is_admin: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
     last_login_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    # Sign-in protection: failed attempts in a row, and when a lock after too many ends.
+    failed_logins: Mapped[int] = mapped_column(Integer, nullable=False, default=0, server_default="0")
+    locked_until: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
     # Values of admin-defined custom fields ({field code: value}); see app.modules.config.custom_fields.
     custom_fields: Mapped[dict | None] = mapped_column(JSON, nullable=True)
+    # Capacity (Phase 6A; the prototype's Team & Capacity): "skill" lookup value ids, the share of a
+    # full working week the person works (100 = full time), and estimated backlog in person-days.
+    skill_ids: Mapped[list | None] = mapped_column(JSON, nullable=True)
+    capacity_pct: Mapped[int] = mapped_column(Integer, nullable=False, default=100, server_default="100")
+    backlog_days: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    # Working calendar (Phase 10): the weekdays the person works (0 = Monday … 6 = Sunday); empty means
+    # Monday to Friday. Public holidays come from the PublicHoliday table of their unit.
+    work_days: Mapped[list | None] = mapped_column(JSON, nullable=True)
+    # Notifications (Phase 10): {kind: {"email": bool, "in_app": bool}}; missing kinds use the defaults.
+    notification_prefs: Mapped[dict | None] = mapped_column(JSON, nullable=True)
+    # Microsoft Entra ID sign-in (Phase 10): the account's object id, linked at the first Microsoft sign-in.
+    entra_oid: Mapped[str | None] = mapped_column(String(64), nullable=True, unique=True)
 
     unit = relationship("OrgUnit", foreign_keys=[unit_id], lazy="joined")
     function = relationship("Function", foreign_keys=[function_id], lazy="joined")
@@ -45,6 +61,14 @@ class User(UserMixin, BaseModel):
 
     def check_password(self, raw: str) -> bool:
         return check_password_hash(self.password_hash, raw)
+
+    # ---- sessions: the id in the session cookie carries a fingerprint of the password hash, so changing
+    # or resetting a password signs the person out everywhere else (including "remember me" cookies).
+    def session_token(self) -> str:
+        return hashlib.sha256(self.password_hash.encode()).hexdigest()[:20]
+
+    def get_id(self) -> str:
+        return f"{self.id}.{self.session_token()}"
 
     # ---- access (cached per request)
     def _access(self):

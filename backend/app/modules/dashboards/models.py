@@ -7,6 +7,7 @@ dashboard shows every viewer only the work they may see, and every number opens 
     {"id": "w1", "type": "kpi" | "table" | "chart" | "progress" | "timeline" | "actions",
      "title": "Red work", "view_id": 12 | None, "filters": {...Portfolio filters...},
      "group_by": "status_id" (charts), "chart": "bar" | "doughnut", "limit": 10, "width": 1 | 2}
+A "capacity" widget shows people's load against usable capacity; its only filter is `unit_id`.
 A widget built on a saved view follows that view's current filters; `filters` keeps a copy, used if
 the view is later deleted.
 """
@@ -22,6 +23,7 @@ WIDGET_TYPES = {
     "progress": "Progress",
     "timeline": "Timeline",
     "actions": "My top actions",
+    "capacity": "Team capacity",
 }
 # Charts group the matching items by one of these. Every group drills into the list with that filter added.
 GROUP_BY = {

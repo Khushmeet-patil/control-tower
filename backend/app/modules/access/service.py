@@ -6,7 +6,7 @@ from app.core.errors import Conflict, ValidationFailed
 from app.extensions import db
 from app.modules.access.catalog import PERMISSION_CODES
 from app.modules.access.models import SCOPES, Role, RolePermission, UserRole
-from app.modules.access.scope import clear_access_cache
+from app.modules.access.scope import clear_access_cache, ensure_within_own_access
 
 
 class RoleService(CommandService):
@@ -40,6 +40,7 @@ class RoleService(CommandService):
 
     def validate_create(self, data):
         self._validate(data)
+        ensure_within_own_access(self.actor, data.get("permission_codes") or [], data.get("scope"), "this role")
         if data.get("is_default"):
             self._clear_other_defaults()
 
@@ -55,6 +56,9 @@ class RoleService(CommandService):
         if obj.is_system and "code" in changes and changes["code"] != obj.code:
             raise ValidationFailed("The code of a built-in role cannot change", {"field": "code"})
         self._validate(changes, obj.id)
+        added = set(changes.get("permission_codes") or []) - set(self.read_value(obj, "permission_codes"))
+        ensure_within_own_access(self.actor, added, changes.get("scope") if changes.get("scope") != obj.scope else None,
+                                 "this role")
         if changes.get("is_default") and not obj.is_default:
             self._clear_other_defaults(obj.id)
 

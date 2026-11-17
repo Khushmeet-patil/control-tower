@@ -4,7 +4,7 @@ This file maps each Control Tower capability to the modules that deliver it and 
 
 - **Capabilities 1–11** are the confirmed list (from `Capability  Modules of Control Tower.txt`).
 - **Capabilities 12–17** are additional requirements. They came out of `Ideation.md` and from gaps found while mapping 1–11.
-- **Phase status** matches the tracker in BUILD_PLAN.md: Phases 0–6 are done; 6A and 7 are next.
+- **Phase status** matches the tracker in BUILD_PLAN.md: every phase (0–10, with 6A) is done.
 
 ---
 
@@ -19,11 +19,11 @@ This file maps each Control Tower capability to the modules that deliver it and 
 | 4 | Configurable approvals and validated progress | Done | `workflows`, progress engine in `rules` | 4, 5, 9 |
 | 5 | Health rules, saved filters and Action Centre | Done | `rules`, `views` | 4, 5, 6, 9 |
 | 6 | Personal home, team view and dashboards | Done | `dashboards`, `views`, home and team pages | 4, 6, 11 |
-| 6A | Capacity and availability *(added)* | Not started | `capacity` (new), extends `assignments` | 3, 4, 12 |
-| 7 | Tool Centre | Not started | `tools` | 8 |
-| 8 | Snapshots, exports and presentation | Not started | `snapshots`, `presentations` (new) | 7, 10 |
-| 9 | Import, backup and hardening | Not started | `imports` (new), backup jobs | 1, 14, 17 |
-| 10 | Expansion | Later | `notifications`, `scenarios`, `integrations` (new) | 13, 15, 16 |
+| 6A | Capacity and availability *(added)* | Done | `capacity` (new), extends `assignments` | 3, 4, 12 |
+| 7 | Tool Centre | Done | `tools` | 8 |
+| 8 | Snapshots, exports and presentation | Done | `snapshots`, `presentations` (new) | 7, 10 |
+| 9 | Import, backup and hardening | Done | `imports` (new), backup jobs | 1, 14, 17 |
+| 10 | Expansion | Done | `notifications`, `scenarios`, `integrations`, `templates` (new) | 13, 15, 16 (and templates from 6) |
 
 ---
 
@@ -39,7 +39,7 @@ This file maps each Control Tower capability to the modules that deliver it and 
 | Shared list, filter and pagination APIs | `core/filters.py`, `core/pagination.py` | 0 ✅ |
 | Universal work item: programme, project, milestone, task, request, action | `work` | 3 |
 | Decisions and evidence attached to items | `work` (decisions), `workflows` (evidence on gates) | 3 / 4 |
-| Imports go through the same commands, never straight to tables | `imports` | 9 |
+| Imports go through the same commands, never straight to tables | `imports` | 9 ✅ |
 | Tools and presentations read the same records | `tools`, `presentations` | 7 / 8 |
 
 ### Capability 2: Clear accountable and responsible ownership
@@ -113,13 +113,13 @@ This file maps each Control Tower capability to the modules that deliver it and 
 
 | Part | Module | Phase |
 |---|---|---|
-| Weekly and on-demand snapshots (stored figures, never live links); baseline; trend charts | `snapshots` | 8 |
-| **Snapshot approval** before a presentation can lock to it | `snapshots` + `workflows` | 8 |
-| Presentation: ordered dashboard pages + **speaker notes**, full screen | `presentations` *(new)* | 8 |
-| Live mode or locked-to-snapshot mode | `presentations` | 8 |
-| Export to Excel (openpyxl) and PDF | `snapshots` | 8 |
-| **PowerPoint export (python-pptx)** | `presentations` | 8 |
-| Published review packs that cannot change afterwards | `snapshots` | 8 |
+| Weekly and on-demand snapshots (stored figures, never live links); baseline; trend charts | `snapshots` | 8 ✅ |
+| **Snapshot approval** before a presentation can lock to it | `snapshots` + `workflows` | 8 ✅ |
+| Presentation: ordered dashboard pages + **speaker notes**, full screen | `presentations` *(new)* | 8 ✅ |
+| Live mode or locked-to-snapshot mode | `presentations` | 8 ✅ |
+| Export to Excel (openpyxl) and PDF | `snapshots` | 8 ✅ |
+| **PowerPoint export (python-pptx)** | `presentations` | 8 ✅ |
+| Published review packs that cannot change afterwards | `snapshots` | 8 ✅ |
 
 > **Gaps closed:** BUILD_PLAN.md marked PowerPoint as optional and did not mention notes or approved snapshots. Capability 7 requires all three, so they are part of Phase 8.
 
@@ -128,11 +128,11 @@ This file maps each Control Tower capability to the modules that deliver it and 
 
 | Part | Module | Phase |
 |---|---|---|
-| Tool registry: name, URL, description, icon; scope by project, team or role | `tools` | 7 |
-| Tool Centre page and the Tools tab on the item page | `tools` | 7 |
-| Opening a tool checks access and is audited | `tools` + `audit` | 7 |
-| **Built-in tools: configurable forms, checklists, readiness assessments** that save to the work item through CommandService | `tools` (reuses form-builder and custom fields) | 7 |
-| Field reserved for passing project data to external tools | `tools` | 7 |
+| Tool registry: name, URL, description, icon; scope by project, team or role | `tools` | 7 ✅ |
+| Tool Centre page and the Tools tab on the item page | `tools` | 7 ✅ |
+| Opening a tool checks access and is audited | `tools` + `audit` | 7 ✅ |
+| **Built-in tools: configurable forms, checklists, readiness assessments** that save to the work item through CommandService | `tools` (reuses form-builder and custom fields) | 7 ✅ |
+| Field reserved for passing project data to external tools | `tools` | 7 ✅ |
 | External tools writing back through a scoped API token | `integrations` | 10 |
 | Calculators, automations, approved plugins | `tools` | 10 |
 
@@ -154,7 +154,7 @@ This file maps each Control Tower capability to the modules that deliver it and 
 | Shared views | `views` | 5 |
 | Dashboard builder | `dashboards` | 6 |
 | **Templates**: reusable item hierarchies, such as a standard project with its milestones | `work` (templates) | 6 |
-| Tool manager | `tools` | 7 |
+| Tool manager | `tools` | 7 ✅ |
 
 > **Added:** templates were in the capability but missing from BUILD_PLAN.md. They are placed in Phase 6, once item types, workflows and views exist.
 
@@ -167,9 +167,9 @@ This file maps each Control Tower capability to the modules that deliver it and 
 | Audit log screen | `audit` | 2 ✅ |
 | Reassignment and handover events | `work`, `assignments` | 3 |
 | Gate decisions | `workflows` | 4 |
-| Tool actions | `tools` | 7 |
-| Append-only snapshots and review packs | `snapshots` | 8 |
-| Import events (source = `import`, one correlation ID per file) | `imports` | 9 |
+| Tool actions | `tools` | 7 ✅ |
+| Append-only snapshots and review packs | `snapshots` | 8 ✅ |
+| Import events (source = `import`, one correlation ID per file) | `imports` | 9 ✅ |
 | Scenario application (one correlation ID per scenario) | `scenarios` | 10 |
 
 ### Capability 11: RBAC and a personal dashboard for every login
@@ -196,11 +196,11 @@ These are not in the confirmed list of 11. They are needed to deliver it fully, 
 | # | Requirement | Why it is needed | Module | Phase |
 |---|---|---|---|---|
 | 12 | **Capacity and availability**: work calendars, skills on people, time off, time-phased allocation (e.g. 40% Jan–Mar), usable capacity after buffers, overloaded and underused thresholds | Capabilities 3 and 4 rely on "availability" and "usable capacity", which need their own data | `capacity` | 6A |
-| 13 | **Notifications**: in-app first (new assignment, approval needed, item turned Red, deadline due), then email and Microsoft Teams | Approvals and escalations stall if people are not told about them | `notifications` | In-app in 4, email/Teams in 10 |
-| 14 | **Excel import**: template, preview, invalid-row report, add-only and update modes, external ID mapping | Moving off spreadsheets is the platform's main purpose | `imports` | 9 |
-| 15 | **What-if scenarios**: store only the proposed changes; on apply, recheck permissions and versions and audit under one correlation ID | Planning before committing changes | `scenarios` | 10 |
-| 16 | **Integrations and API**: Microsoft Entra ID sign-in, Outlook calendar, webhooks, API tokens, read API for Power BI | Wider rollout, and tools that write back (capability 8) | `integrations` | 10 |
-| 17 | **Data quality and hardening**: data-quality view (missing owners, stale updates), scheduled MySQL backup and restore, performance test on a large data set, security review | Trust in the "single source of truth" depends on it | `rules` (data quality), ops | 5 (data-quality rules), 9 (rest) |
+| 13 | **Notifications**: in-app first (new assignment, approval needed, item turned Red, deadline due), then email and Microsoft Teams | Approvals and escalations stall if people are not told about them | `notifications` | 10 ✅ (in-app, email, Teams) |
+| 14 | **Excel import**: template, preview, invalid-row report, add-only and update modes, external ID mapping | Moving off spreadsheets is the platform's main purpose | `imports` | 9 ✅ |
+| 15 | **What-if scenarios**: store only the proposed changes; on apply, recheck permissions and versions and audit under one correlation ID | Planning before committing changes | `scenarios` | 10 ✅ |
+| 16 | **Integrations and API**: Microsoft Entra ID sign-in, Outlook calendar, webhooks, API tokens, read API for Power BI | Wider rollout, and tools that write back (capability 8) | `integrations` | 10 ✅ |
+| 17 | **Data quality and hardening**: data-quality view (missing owners, stale updates), scheduled MySQL backup and restore, performance test on a large data set, security review | Trust in the "single source of truth" depends on it | `rules` (data quality), ops | 5 (data-quality rules), 9 (rest) ✅ |
 
 ---
 

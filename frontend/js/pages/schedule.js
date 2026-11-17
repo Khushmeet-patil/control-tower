@@ -1,10 +1,10 @@
-/** Schedule: milestones (or any item type) under one item or across everything visible,
- *  as a timeline with a "today" line and a table of planned vs actual dates. */
+/** Schedule: milestones (or any item type) under one item or across everything visible, as a Gantt chart
+ *  (zoom, progress, dependency arrows, a "today" line) and a table of planned vs actual dates. */
 import { api } from '../core/api.js';
 import { initLayout, pageHeader } from '../core/layout.js';
 import { lookupOptions, lookupValue, lookupValues } from '../core/lookups.js';
 import { el } from '../core/utils.js';
-import { createTimeline } from '../components/timeline.js';
+import { createGantt } from '../components/gantt.js';
 import { showError } from '../components/toast.js';
 import { createWorkTable } from '../components/work-table.js';
 
@@ -35,9 +35,13 @@ async function refresh() {
   history.replaceState(null, '', `?${next}`);
   try {
     const data = await api.get('/work-items', { ...query, per_page: 200, sort: 'planned_end' });
-    const timeline = createTimeline(data.items, {
+    const ids = data.items.map((i) => i.id).join(',');
+    const links = ids ? (await api.get('/work-items/dependencies', { ids }).catch(() => ({ items: [] }))).items : [];
+    const timeline = createGantt(data.items, {
+      links,
       label: (i) => `${i.code} ${i.title}`,
       color: (i) => (i.is_overdue ? 'var(--ct-danger)' : lookupValue(i.status_id)?.color),
+      isMilestone: (i) => i.item_type_id === milestone,
       onClick: (i) => { location.href = `/pages/item.html?id=${i.id}`; },
     });
     timelineCard.replaceChildren(el('div', { class: 'ct-card__body' },

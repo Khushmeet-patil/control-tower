@@ -3,7 +3,7 @@
  *   healthBadge(item.health)            → badge with the reason as tooltip ('n/a' when not assessed)
  *   createFindings(health.findings)     → explained list: rule, reason, source item, next action, escalation
  */
-import { lookupBadge } from '../core/lookups.js';
+import { lookupBadge, lookupValues } from '../core/lookups.js';
 import { el } from '../core/utils.js';
 import { createBadge } from './badge.js';
 import { createPersonCell } from './person.js';
@@ -17,6 +17,12 @@ export function healthBadge(health) {
   const badge = lookupBadge(health.value_id);
   if (badge.nodeType === 1) badge.title = health.reason;
   return badge;
+}
+
+/** Badge for a health code ('red', 'amber'…), when only the code is known. */
+export function healthBadgeFromCode(code) {
+  const v = lookupValues('health', { includeRetired: true }).find((x) => x.code === code);
+  return v ? lookupBadge(v.id) : createBadge('n/a', 'var(--ct-border-strong)');
 }
 
 function itemLink(ref) {

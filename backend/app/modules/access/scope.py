@@ -140,3 +140,18 @@ def unit_visibility_clause(user):
     if units is None:
         return None
     return OrgUnit.id.in_(units) if units else false()
+
+
+def ensure_within_own_access(actor, permission_codes=(), scope=None, what="this access") -> None:
+    """Nobody but an administrator can hand out more than they hold themselves: a permission they do not
+    have, or a wider scope than their own. Stops a role manager from making themselves an administrator."""
+    from app.core.errors import Forbidden
+
+    if actor is None or actor.is_admin:
+        return
+    missing = set(permission_codes) - set(actor.permission_codes())
+    if missing:
+        raise Forbidden(f"You cannot grant {what}: it includes permissions you do not have",
+                        {"codes": sorted(missing)})
+    if scope is not None and SCOPES.index(scope) > SCOPES.index(actor.scope):
+        raise Forbidden(f"You cannot grant {what}: its scope is wider than yours")

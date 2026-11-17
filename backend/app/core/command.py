@@ -25,6 +25,8 @@ its own, as "custom_fields.<code>".
 """
 from contextlib import contextmanager
 
+from flask import g, has_request_context
+
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm.exc import StaleDataError
 
@@ -35,6 +37,12 @@ from app.core.permissions import ensure_can
 from app.extensions import db
 
 CUSTOM_PREFIX = "custom_fields."
+
+
+def clear_derived_caches() -> None:
+    """Forget values calculated earlier in this request (health) because data is about to change."""
+    if has_request_context():
+        g.pop("_health_cache", None)
 
 
 class CommandService:
@@ -55,6 +63,8 @@ class CommandService:
         self.tenant_id = tenant_id if tenant_id is not None else getattr(actor, "tenant_id", None)
         if self.tenant_id is None:
             raise ValueError("CommandService needs an actor or an explicit tenant_id")
+        if source == "screen" and has_request_context() and g.get("api_token_id"):
+            source = "api"  # the request came with an API token, not from a screen
         self.source = source
         self.correlation_id = correlation_id or current_correlation_id()
 
@@ -221,8 +231,25 @@ class CommandService:
             reason=reason, source=self.source, correlation_id=self.correlation_id,
         )
 
+    def transaction(self):
+        """Public form of _transaction(), for commands made of several writes."""
+        return self._transaction()
+
     @contextmanager
     def _transaction(self):
+        """One transaction per command. Commands may call other commands inside `with svc.transaction():`
+        (e.g. accepting a request creates a work item); the inner ones join the outer transaction and only
+        the outermost commits, so either everything is saved and audited, or nothing is."""
+        clear_derived_caches()  # a write is coming: health worked out earlier in this request may change
+        depth = db.session.info.get("ct_tx_depth", 0)
+        if depth:
+            db.session.info["ct_tx_depth"] = depth + 1
+            try:
+                yield
+            finally:
+                db.session.info["ct_tx_depth"] = depth
+            return
+        db.session.info["ct_tx_depth"] = 1
         try:
             yield
             db.session.commit()
@@ -235,3 +262,5 @@ class CommandService:
         except Exception:
             db.session.rollback()
             raise
+        finally:
+            db.session.info["ct_tx_depth"] = 0

@@ -76,4 +76,8 @@ def record_event(*, tenant_id: int, actor, entity_type: str, entity_id: int | No
         correlation_id=correlation_id or current_correlation_id(),
     )
     db.session.add(event)
+    # Webhooks subscribed to this kind of change are queued in the same transaction (outbox).
+    from app.modules.integrations.events import on_audit
+
+    on_audit(event)
     return event

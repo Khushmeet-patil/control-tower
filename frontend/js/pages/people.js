@@ -3,7 +3,7 @@
 import { api } from '../core/api.js';
 import { icon } from '../core/icons.js';
 import { can, initLayout, pageHeader } from '../core/layout.js';
-import { customFields, loadSettings, term } from '../core/lookups.js';
+import { customFields, loadSettings, lookupOptions, term } from '../core/lookups.js';
 import { el, formatDateTime } from '../core/utils.js';
 import { createBadge } from '../components/badge.js';
 import { customColumns, customFilterFields, customFormFields, customValueNode, withCustomValues } from '../components/custom-fields.js';
@@ -106,6 +106,12 @@ function openEditor(existing) {
     canAssignRoles ? { key: 'role_ids', label: 'Roles', type: 'checkboxes', options: roleOptions, help: existing ? null : 'Leave empty to give the default role.' } : null,
     { key: 'is_active', label: 'Active', type: 'checkbox', checkboxLabel: 'Active (can sign in)', default: true, disabled: isSelf },
     user.is_admin ? { key: 'is_admin', label: 'Administrator', type: 'checkbox', checkboxLabel: 'Platform administrator (full access)', disabled: isSelf } : null,
+    { key: 'skill_ids', label: 'Skills', type: 'checkboxes', options: lookupOptions('skill'), help: 'Used to find people with spare capacity.' },
+    { key: 'capacity_pct', label: 'Working capacity %', type: 'number', help: '100 = full time; 50 = half time. Empty = full time.' },
+    { key: 'backlog_days', label: 'Estimated backlog (person-days)', type: 'number' },
+    { key: 'work_days', label: 'Working days', type: 'checkboxes', full: true,
+      options: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((d, i) => ({ value: i, label: d })),
+      default: [0, 1, 2, 3, 4], help: 'The days they normally work. Capacity counts only these days (and public holidays are taken off).' },
     ...customFormFields('person', existing),
     existing ? { key: 'reason', label: 'Reason for change', help: 'Saved in the audit log.', full: true } : null,
   ].filter(Boolean);

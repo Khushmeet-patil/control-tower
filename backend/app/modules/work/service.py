@@ -93,9 +93,15 @@ def involved_item_ids(user_id: int):
 
 def allocated_item_ids(tenant_id: int, person_id: int, on: date | None = None):
     """Select of the items whose assignment counts in a person's load on a day (see allocation_load)."""
+    return allocated_pairs(tenant_id, [person_id], on).with_only_columns(Assignment.work_item_id)
+
+
+def allocated_pairs(tenant_id: int, person_ids, on: date | None = None):
+    """Select of (person id, item id) for assignments that count in people's load on a day: not deleted,
+    dated around that day, on open work. The one definition behind load, `allocated_to` and the team view."""
     on = on or today()
-    stmt = (select(Assignment.work_item_id).join(WorkItem, WorkItem.id == Assignment.work_item_id)
-            .where(Assignment.tenant_id == tenant_id, Assignment.person_id == person_id,
+    stmt = (select(Assignment.person_id, Assignment.work_item_id).join(WorkItem, WorkItem.id == Assignment.work_item_id)
+            .where(Assignment.tenant_id == tenant_id, Assignment.person_id.in_(list(person_ids)),
                    Assignment.is_deleted.is_(False), WorkItem.is_deleted.is_(False),
                    or_(Assignment.start_date.is_(None), Assignment.start_date <= on),
                    or_(Assignment.end_date.is_(None), Assignment.end_date >= on)))
@@ -279,6 +285,11 @@ class WorkItemService(_ChecksMixin, TreeService):
             stmt = stmt.limit(limit)
         return db.session.scalars(stmt).all()
 
+    def light_rows(self, params, *columns):
+        """Only some columns of the matching items (plain rows, no ORM objects): for roll-ups over many items."""
+        stmt = self.query({k: v for k, v in dict(params).items() if k not in ("page", "per_page")})
+        return db.session.execute(stmt.with_only_columns(*columns).order_by(None)).all()
+
     def _mine_clause(self, mine):
         if self.actor is None:
             raise ValidationFailed("'mine' needs a signed-in user")
@@ -397,6 +408,14 @@ class WorkItemService(_ChecksMixin, TreeService):
             out["health"] = health_detail(self.actor, self.tenant_id, w.id)
         return out
 
+    def dependency_links(self, ids) -> list[dict]:
+        if not ids:
+            return []
+        visible = set(db.session.scalars(self.base_query().with_only_columns(WorkItem.id).where(WorkItem.id.in_(ids))))
+        rows = db.session.execute(select(WorkItemDependency.work_item_id, WorkItemDependency.depends_on_id).where(
+            WorkItemDependency.work_item_id.in_(visible), WorkItemDependency.depends_on_id.in_(visible))).all()
+        return [{"work_item_id": a, "depends_on_id": b} for a, b in rows]
+
     def _visible_ancestors(self, w):
         ids = ancestor_ids(WorkItemClosure, w.id)
         visible = {a.id: a for a in db.session.scalars(self.base_query().where(WorkItem.id.in_(ids)))}
@@ -408,11 +427,14 @@ class WorkItemService(_ChecksMixin, TreeService):
         return self.serialize(self.get(item_id), detail=True)
 
     def history(self, item_id: int, params) -> dict:
+        from app.modules.tools.service import response_ids_for_item
+
         item = self.get(item_id)
         assignment_ids = select(Assignment.id).where(Assignment.work_item_id == item.id)
         stmt = select(AuditEvent).where(AuditEvent.tenant_id == self.tenant_id, or_(
             (AuditEvent.entity_type == "work_item") & (AuditEvent.entity_id == item.id),
             (AuditEvent.entity_type == "assignment") & AuditEvent.entity_id.in_(assignment_ids),
+            (AuditEvent.entity_type == "tool_response") & AuditEvent.entity_id.in_(response_ids_for_item(item.id)),
         )).order_by(AuditEvent.occurred_at.desc(), AuditEvent.id.desc())
         return paginate(stmt, params, serialize_event)
 
@@ -441,11 +463,19 @@ class WorkItemService(_ChecksMixin, TreeService):
             db.session.execute(delete(WorkItemDependency).where(WorkItemDependency.work_item_id == obj.id))
             db.session.add_all(WorkItemDependency(work_item_id=obj.id, depends_on_id=d) for d in ids)
         self._access_cache.clear()
-        old_status = obj.status_id
+        old_status, old_accountable = obj.status_id, obj.accountable_id
         if changes:
             super().apply_update(obj, changes)
         if "status_id" in changes and obj.id is not None:
             engine.on_status_change(self, obj, old_status, obj.status_id)
+        if "accountable_id" in changes and obj.id is not None and old_accountable != obj.accountable_id:
+            from app.modules.notifications.service import item_link, notify
+
+            notify(self.tenant_id, [obj.accountable_id], "handover", f"You are now accountable for {obj.code} {obj.title}",
+                   body=f"Handed over by {getattr(self.actor, 'full_name', 'the system')}"
+                        + (f": {self._reason}" if self._reason else "."),
+                   link=item_link(obj), entity=("work_item", obj.id), actor=self.actor,
+                   source=self.source)
 
     def after_create(self, obj, data):
         super().after_create(obj, data)
@@ -546,7 +576,16 @@ class WorkItemService(_ChecksMixin, TreeService):
                     WorkItemDependency.work_item_id.in_(frontier)))) - seen
         return ids
 
+    @staticmethod
+    def _check_links(data):
+        """The evidence link is shown to other people, so it must be a web address (never javascript: or
+        data:). Adoption evidence may be a note or a link; it is shown as text unless it is a web link."""
+        value = data.get("evidence_url")
+        if value and not str(value).strip().lower().startswith(("http://", "https://")):
+            raise ValidationFailed("Enter a link starting with https://", {"field": "evidence_url"})
+
     def validate_create(self, data):
+        self._check_links(data)
         parent = None
         if data.get("parent_id") is not None:
             parent = self.get(data["parent_id"])  # must be visible
@@ -601,6 +640,7 @@ class WorkItemService(_ChecksMixin, TreeService):
         data["code"] = self._next_code(data["item_type_id"])
 
     def validate_update(self, obj, changes):
+        self._check_links(changes)
         for field in self.extra_fields & set(changes):  # linked lists compare as sorted sets
             changes[field] = sorted(set(changes[field] or []))
         if "adoption_stage_ids" in changes:
@@ -623,6 +663,8 @@ class WorkItemService(_ChecksMixin, TreeService):
                 if field == "item_type_id" and changes[field] is None:
                     raise ValidationFailed("Choose an item type", {"field": field})
                 self._check_lookup(field, changes[field], previous=getattr(obj, field))
+        if "status_id" in changed:
+            self._check_transition(obj, changes.get("item_type_id", obj.item_type_id), obj.status_id, changes["status_id"])
 
         new_parent_id = changes.get("parent_id", obj.parent_id)
         parent = db.session.get(WorkItem, new_parent_id) if new_parent_id else None
@@ -650,6 +692,20 @@ class WorkItemService(_ChecksMixin, TreeService):
         merged = lambda f: changes.get(f, getattr(obj, f))  # noqa: E731
         self._check_dates(merged("planned_start"), merged("planned_end"), "planned_end")
         self._check_dates(merged("actual_start"), merged("actual_end"), "actual_end")
+
+    def _check_transition(self, obj, item_type_id, old_status, new_status):
+        """Settings may limit which status an item moves to next (Approval chains → Status flow)."""
+        from app.modules.config.versioning import published_transitions
+
+        if self.actor is None or old_status is None or new_status is None:
+            return
+        allowed = published_transitions(self.tenant_id, item_type_id)
+        if allowed is None or old_status not in allowed or new_status in allowed[old_status]:
+            return
+        labels = published_list(self.tenant_id, "status")
+        names = ", ".join(sorted(labels[i]["label"] for i in allowed[old_status] if i in labels)) or "no other status"
+        raise ValidationFailed(f"From “{labels.get(old_status, {}).get('label', 'this status')}” this item can move to: "
+                               f"{names}", {"field": "status_id", "allowed": sorted(allowed[old_status])})
 
     def validate_delete(self, obj):
         self.ensure_manage(obj, "You cannot delete this item")
@@ -729,6 +785,26 @@ class AssignmentService(_ChecksMixin, CommandService):
 
     def validate_delete(self, obj):
         self.items.ensure_manage(self.items.get(obj.work_item_id), "Only the item's managers can remove assignments")
+
+    def _tell(self, a):
+        from app.modules.notifications.service import notify
+
+        item = db.session.get(WorkItem, a.work_item_id)
+        dates = " to ".join(d.isoformat() for d in (a.start_date, a.end_date) if d)
+        notify(self.tenant_id, [a.person_id], "assignment", f"You were assigned to {item.code} {item.title}",
+               body=f"{a.allocation_pct}% of your time" + (f", {dates}" if dates else "") + (f". {a.duties}" if a.duties else "."),
+               link=f"/pages/item.html?id={item.id}", entity=("work_item", item.id), actor=self.actor,
+               source=self.source)
+
+    def after_create(self, obj, data):
+        super().after_create(obj, data)
+        self._tell(obj)
+
+    def apply_update(self, obj, changes):
+        before = obj.person_id
+        super().apply_update(obj, changes)
+        if obj.person_id != before:
+            self._tell(obj)
 
 
 def _iso(d):

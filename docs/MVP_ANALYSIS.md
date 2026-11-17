@@ -115,9 +115,9 @@ The platform keeps its own component structure. Only the tokens and layout CSS c
 | Top 5 Actions with scoring | Action Centre per user; the prototype's scores are the default weights | 5 |
 | Saved views | Saved filters (personal and shared) | 5 |
 | Action Centre KPIs, board, hold points, matrix, watchlist, distributions, monthly completions, upcoming | My Home and dashboard widgets, scoped to the user's units | 6 |
-| Team & Capacity (buffer, load, Overloaded/Underutilised, skills, backlog) | Capacity module | 6 (basic load) → 6A |
+| Team & Capacity (buffer, load, Overloaded/Underutilised, skills, backlog) | Capacity module | 6 (basic load) → 6A ✅ |
 | Adoption pipeline (6 stages and evidence) | Configurable stage checklist on Initiatives; "ready for rollout" and "built, not adopted" rules | 5 |
-| Demand Intake and Assess & decide | Item type Request with a decision workflow; capacity impact check; Accept creates an Initiative | 4 (workflow), 6A (capacity impact) |
+| Demand Intake and Assess & decide | Demand requests (own module) with decisions, capacity assessment; Accept creates an Initiative | 6A ✅ |
 | Export xlsx, csv, json | Exports | 8 |
 | Templates, import preview, add-only and update modes, flexible dates | Import module, through CommandService | 9 |
 | Backup and restore, backup banner | Scheduled MySQL backups (not needed in the browser) | 9 |
@@ -136,3 +136,5 @@ Follow BUILD_PLAN.md, and use the prototype as the target screen for each phase:
 6. **Phases 8–10:** export, import, what-if.
 
 When Phase 6 is done, every screen in the prototype except What-if and Import exists, working on shared, audited, permissioned data.
+
+**Status (Phase 10 done):** every screen in the prototype exists, including What-if (What-if scenarios), Import (Data & Backup) and a dedicated Actions & Decisions screen.

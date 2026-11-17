@@ -122,7 +122,7 @@ def no_open_children(item, ctx, params):
 
 
 def owner_overloaded(item, ctx, params):
-    usable = 100 - int(params.get("buffer_pct") or 0)
+    usable = ctx.usable(item.accountable_id, int(params.get("buffer_pct") or 0))
     load = ctx.load(item.accountable_id)
     if load <= usable:
         return None
@@ -176,9 +176,9 @@ def quick_win(item, ctx, params):
     pct = ctx.progress(item.id)
     if pct < int(params.get("min_progress") or 80) or pct >= 100:
         return None
-    usable = 100 - int(params.get("buffer_pct") or 0)
-    spare = [(ctx.load(p), p) for p in ctx.helpers(item)]
-    spare = sorted((load, p) for load, p in spare if load < usable / 2)
+    buffer = int(params.get("buffer_pct") or 0)
+    spare = [(ctx.load(p), p) for p in ctx.helpers(item) if ctx.usable(p, buffer) > 0]
+    spare = sorted((load, p) for load, p in spare if load < ctx.usable(p, buffer) / 2)
     if not spare:
         return None
     load, person = spare[0]

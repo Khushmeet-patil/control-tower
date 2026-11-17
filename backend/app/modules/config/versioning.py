@@ -11,7 +11,7 @@ from app.extensions import db
 from app.modules.config.models import ENTITY_TYPES, FIELD_TYPES, ConfigVersion, FieldDefinition, Term
 from app.modules.lookups.models import LookupType, LookupValue
 from app.modules.rules.models import HealthRule
-from app.modules.workflows.models import ApprovalChain, ApprovalStep
+from app.modules.workflows.models import ApprovalChain, ApprovalStep, StatusTransition
 
 # collection → (model, audit entity type, snapshot fields, how to name a row in a change list)
 COLLECTIONS = {
@@ -40,7 +40,18 @@ COLLECTIONS = {
                      ["code", "name", "kind", "rule_type", "params", "outcome", "item_type_ids", "score",
                       "recommended_action", "escalate_to", "description", "sort_order", "is_active"],
                      lambda r, s: f"Rule “{r['name']}”"),
+    "status_transitions": (StatusTransition, "status_transition",
+                           ["item_type_id", "from_status_id", "to_status_ids", "is_active"],
+                           lambda r, s: f"Status flow from {_value_label(s, r['from_status_id'])}"
+                                        + (f" for {_value_label(s, r['item_type_id'])}" if r.get("item_type_id") else "")),
 }
+
+
+def _value_label(snapshot, value_id):
+    for v in snapshot.get("lookup_values", []):
+        if v["id"] == value_id:
+            return f"“{v['label']}”"
+    return "a value"
 
 
 def _chain_name(snapshot, chain_id):
@@ -146,6 +157,8 @@ def settings_payload(tenant_id: int) -> dict:
         "version": version.number if version else None,
         "published_at": version.published_at.isoformat() if version else None,
         "lookups": lookups, "fields": fields, "terms": terms,
+        "status_transitions": [{k: r[k] for k in ("item_type_id", "from_status_id", "to_status_ids")}
+                               for r in snapshot.get("status_transitions", []) if r["is_active"]],
         "entity_types": ENTITY_TYPES, "field_types": FIELD_TYPES,
     }
 
@@ -161,7 +174,18 @@ def published_values(tenant_id: int, lookup_type_id: int) -> dict[int, dict]:
 
 
 def published_list(tenant_id: int, type_code: str) -> dict[int, dict]:
-    """Published values of the lookup list with this code, by id ({} if the list does not exist)."""
+    """Published values of the lookup list with this code, by id ({} if the list does not exist).
+    Cached for the request, next to the settings themselves (cleared with them)."""
+    if has_request_context():
+        cache = g.setdefault("_settings_cache", {})
+        key = (tenant_id, "list", type_code)
+        if key not in cache:
+            cache[key] = _published_list(tenant_id, type_code)
+        return cache[key]
+    return _published_list(tenant_id, type_code)
+
+
+def _published_list(tenant_id: int, type_code: str) -> dict[int, dict]:
     snapshot, _ = published_snapshot(tenant_id)
     type_id = next((t["id"] for t in snapshot.get("lookup_types", []) if t["code"] == type_code), None)
     return published_values(tenant_id, type_id) if type_id else {}
@@ -181,3 +205,15 @@ def published_chains(tenant_id: int) -> list[dict]:
             steps.setdefault(st["chain_id"], []).append(st)
     return [{**c, "steps": sorted(steps.get(c["id"], []), key=lambda x: (x["sort_order"], x["id"]))}
             for c in snapshot.get("approval_chains", []) if c["is_active"]]
+
+
+def published_transitions(tenant_id: int, item_type_id: int | None) -> dict[int, set[int]] | None:
+    """{from status id: allowed next status ids} for an item type, or None when its statuses change freely.
+    Rows for the type win; otherwise the rows that apply to every type."""
+    snapshot, _ = published_snapshot(tenant_id)
+    rows = [r for r in snapshot.get("status_transitions", []) if r["is_active"]]
+    typed = [r for r in rows if r["item_type_id"] == item_type_id and item_type_id is not None]
+    chosen = typed or [r for r in rows if r["item_type_id"] is None]
+    if not chosen:
+        return None
+    return {r["from_status_id"]: set(r["to_status_ids"] or []) for r in chosen}

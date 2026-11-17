@@ -22,7 +22,10 @@ import { portfolioUrl } from '../components/work-table.js';
 const { content } = await initLayout({ active: 'action-centre', title: 'Action Centre', permission: 'work.view' });
 const TONE = { red: 'var(--ct-danger)', amber: 'var(--ct-warning)', grey: 'var(--ct-text-subtle)' };
 const portfolio = portfolioUrl;
-const link = (ref, text) => (ref?.id ? el('a', { href: `/pages/item.html?id=${ref.id}` }, text ?? `${ref.code} ${ref.title}`) : el('span', { class: 'ct-muted' }, ref?.title || '—'));
+const link = (ref, text) => {
+  if (ref?.request_id) return el('a', { href: `/pages/demand.html?assess=${ref.request_id}` }, text ?? `${ref.code} ${ref.title}`);
+  return ref?.id ? el('a', { href: `/pages/item.html?id=${ref.id}` }, text ?? `${ref.code} ${ref.title}`) : el('span', { class: 'ct-muted' }, ref?.title || '—');
+};
 const sub = (...parts) => el('div', { class: 'ct-muted ct-small' }, parts.filter(Boolean).join(' · '));
 
 function table(headers, rows, empty = 'No records yet') {
@@ -73,10 +76,12 @@ async function render() {
   // ---- hold points: where I am needed
   const holds = table(['Type', 'Item', 'Owner', 'When', ''], ac.hold_points.map((h) => el('tr', {},
     el('td', {}, h.action_type_id ? lookupBadge(h.action_type_id) : h.type),
-    el('td', {}, link(h.item, h.item.title), h.in ? el('div', { class: 'ct-muted ct-small', title: h.in.title }, `in ${h.in.code}`) : null),
+    el('td', {}, link(h.request_id ? { ...h.item, request_id: h.request_id } : h.item, h.item.title),
+      h.in ? el('div', { class: 'ct-muted ct-small', title: h.in.title }, `in ${h.in.code}`) : null),
     el('td', {}, h.owner?.full_name || '—'),
     el('td', { class: h.when.startsWith('overdue') ? 'ct-text-danger' : null }, h.when),
     el('td', {}, h.approval_id ? el('button', { class: 'ct-btn ct-btn--sm ct-btn--primary', onClick: () => openReview(h.approval_id, { onDone: reload }) }, 'Review')
+      : h.request_id ? el('a', { class: 'ct-btn ct-btn--sm ct-btn--primary', href: `/pages/demand.html?assess=${h.request_id}` }, 'Assess')
       : h.item.id ? el('a', { class: 'ct-btn ct-btn--sm', href: `/pages/item.html?id=${h.item.id}` }, h.type === 'Setup gap' ? 'Fix' : 'Open') : null))),
   'Nothing is waiting for you.');
 
@@ -88,7 +93,7 @@ async function render() {
         ? el('a', { href: portfolio({ level: 'top', priority_id: row.priority_id, health: h }) }, String(row.cells[h]))
         : el('span', { class: 'ct-muted' }, '·'))))))));
   const watchlist = ac.watchlist.length ? el('div', { class: 'ct-stack', style: { gap: '8px' } }, ac.watchlist.map((w) => el('div', {},
-    el('strong', {}, `${w.count} `), w.rule,
+    el('strong', {}, `${w.count} `), w.link ? el('a', { href: w.link }, w.rule) : w.rule,
     el('div', { class: 'ct-small' }, w.items.slice(0, 4).map((i, n) => [n ? ', ' : '', link(i, i.title)]), w.items.length > 4 ? ' …' : ''))))
     : el('p', { class: 'ct-muted ct-small' }, 'Nothing on the watchlist.');
 

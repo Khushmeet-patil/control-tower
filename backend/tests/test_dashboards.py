@@ -286,3 +286,19 @@ def test_quick_win_signal(demo, as_user, admin):
     ac = c.get("/api/v1/action-centre").get_json()
     wins = [w for w in ac["watchlist"] if w["rule"] == "Quick win"]
     assert wins and any(i["code"] in (triage.code, rules.code) for i in wins[0]["items"])
+
+
+def test_team_figures_equal_the_lists_they_open_for_every_person(demo, as_user):
+    """The team table's figures are worked out in bulk; each must still equal its list's total."""
+    from app.modules.work.service import WorkItemService, portfolio_params
+    from tests.conftest import person
+
+    for who in ("asha", "meera", "karan", "sara"):
+        data = as_user(who).get("/api/v1/team").get_json()
+        assert data["members"], who
+        svc = WorkItemService(person(who))
+        for m in data["members"]:
+            for c in m["counts"]:
+                assert c["value"] == svc.count(portfolio_params(c["filters"])), (who, m["person"]["full_name"], c["key"])
+            visible = {w.id for w in svc.rows({})}
+            assert {i["id"] for i in m["initiatives"]} <= visible  # never names work the viewer cannot open

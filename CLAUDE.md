@@ -17,10 +17,14 @@ Python Flask + SQLAlchemy 2 + Alembic + Pydantic (`backend/`), MySQL via PyMySQL
 - Seed: `.venv/bin/flask --app run seed` (add `--demo` for a sample organisation; demo password `Password123!`)
 - Run: `.venv/bin/python run.py` → http://localhost:5050 (5000 is taken by macOS AirPlay)
 - Test: `.venv/bin/pytest`
+- Weekly snapshot (schedule it, e.g. Mondays 06:00): `.venv/bin/flask --app run snapshot --weekly`
+- Notifications: send queued email and webhooks (schedule every minute) `.venv/bin/flask --app run notify --deliver`; daily checks (due soon, overdue, turned Red; e.g. 07:00) `.venv/bin/flask --app run notify --checks`
+- Backup (schedule daily): `.venv/bin/flask --app run backup` · restore: `flask --app run restore <file> --yes`
+- Performance check (large synthetic data, throwaway DB): `PYTHONPATH=. .venv/bin/python scripts/perf_check.py`
 - Export the production MySQL schema: `.venv/bin/flask --app run schema-export` → `database/schema_mysql.sql`
 
 ## Database rule
 Local development uses SQLite (`DATABASE_URL=sqlite:///control_tower_dev.db`). After **every** model change: create the migration, upgrade the local database, then run `schema-export`, so that `backend/database/schema_mysql.sql` always matches the code. A test enforces this. See CONVENTIONS.md.
 
 ## Status
-Phases 0–6 done. Running on local SQLite; the production MySQL schema is kept in `backend/database/schema_mysql.sql`. Next: Phase 6A (capacity and availability, see docs/CAPABILITY_PHASE_MAP.md) or Phase 7 (tools registry).
+All phases (0–10, with 6A) done, including everything earlier phases deferred. Running on local SQLite; the production MySQL schema is kept in `backend/database/schema_mysql.sql`. Optional settings for email, Microsoft Entra ID and the public address are in `backend/.env.example`. Security notes: [docs/SECURITY_REVIEW.md](docs/SECURITY_REVIEW.md).

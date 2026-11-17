@@ -97,3 +97,20 @@ class ApprovalDecision(BaseModel):
     decided_at: Mapped[datetime] = mapped_column(DateTime, nullable=False)
 
     approver = relationship("User", foreign_keys=[approver_id], lazy="joined")
+
+
+class StatusTransition(BaseModel):
+    """Settings (Phase 10): which statuses an item may move to from a status ("stages and transitions").
+
+    One row per (item type, from status): `to_status_ids` lists where it may go next. Rows with no item
+    type apply to every type that has no rows of its own. A status with no row may change to anything,
+    so admins can tighten the flow one status at a time; with no rows at all, statuses change freely.
+    The approvals engine itself (rejection sends work back to In progress) is not limited by these rules.
+    """
+
+    __tablename__ = "status_transitions"
+
+    item_type_id: Mapped[int | None] = mapped_column(ForeignKey("lookup_values.id"), nullable=True)
+    from_status_id: Mapped[int] = mapped_column(ForeignKey("lookup_values.id"), nullable=False)
+    to_status_ids: Mapped[list] = mapped_column(JSON, nullable=False)
+    is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)

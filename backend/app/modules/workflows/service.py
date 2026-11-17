@@ -17,7 +17,7 @@ from app.modules.work.models import WorkItem
 from app.modules.work.service import MANAGE as MANAGE_LEVEL, WorkItemService, person_ref
 from app.modules.workflows import engine
 from app.modules.workflows.models import (
-    APPROVER_KINDS, WHEN_MISSING, ApprovalChain, ApprovalDecision, ApprovalRequest, ApprovalStep)
+    APPROVER_KINDS, WHEN_MISSING, ApprovalChain, ApprovalDecision, ApprovalRequest, ApprovalStep, StatusTransition)
 
 SETTINGS = {"create": "settings.manage", "update": "settings.manage", "delete": "settings.manage"}
 CODE = re.compile(r"^[a-z][a-z0-9_]{1,49}$")
@@ -327,3 +327,60 @@ def serialize_decision(d):
         "decided_at": d.decided_at.isoformat(),
     }
 
+
+# ---------------------------------------------------------------------- settings: status transitions
+class TransitionService(CommandService):
+    """Allowed status changes per item type (draft settings; enforced once published)."""
+
+    model = StatusTransition
+    entity_type = "status_transition"
+    permissions = SETTINGS
+
+    def _values(self, list_code):
+        return set(db.session.scalars(
+            select(LookupValue.id).join(LookupType, LookupType.id == LookupValue.lookup_type_id)
+            .where(LookupType.tenant_id == self.tenant_id, LookupType.code == list_code)))
+
+    def _check(self, data, obj=None):
+        statuses = self._values("status")
+        if "item_type_id" in data and data["item_type_id"] is not None and data["item_type_id"] not in self._values("item_type"):
+            raise ValidationFailed("Unknown item type", {"field": "item_type_id"})
+        if "from_status_id" in data and data["from_status_id"] not in statuses:
+            raise ValidationFailed("Choose the status it moves from", {"field": "from_status_id"})
+        if "to_status_ids" in data:
+            ids = sorted(set(data["to_status_ids"] or []))
+            if set(ids) - statuses:
+                raise ValidationFailed("Unknown status", {"field": "to_status_ids"})
+            data["to_status_ids"] = ids
+        item_type = data.get("item_type_id", getattr(obj, "item_type_id", None))
+        from_status = data.get("from_status_id", getattr(obj, "from_status_id", None))
+        stmt = select(StatusTransition.id).where(
+            StatusTransition.tenant_id == self.tenant_id, StatusTransition.is_deleted.is_(False),
+            StatusTransition.from_status_id == from_status,
+            StatusTransition.item_type_id.is_(None) if item_type is None else StatusTransition.item_type_id == item_type)
+        if obj is not None:
+            stmt = stmt.where(StatusTransition.id != obj.id)
+        if db.session.scalar(stmt):
+            raise ValidationFailed("There is already a rule for this status and item type; edit that one",
+                                   {"field": "from_status_id"})
+
+    def validate_create(self, data):
+        if data.get("from_status_id") is None:
+            raise ValidationFailed("Choose the status it moves from", {"field": "from_status_id"})
+        data.setdefault("to_status_ids", [])
+        self._check(data)
+
+    def validate_update(self, obj, changes):
+        self._check(changes, obj)
+
+    def delete(self, record_id, *, reason=None):
+        raise ValidationFailed("Rules are kept for the settings history; switch them off instead")
+
+    def list_all(self):
+        return [serialize_transition(t) for t in db.session.scalars(
+            self.base_query().order_by(StatusTransition.item_type_id, StatusTransition.from_status_id))]
+
+
+def serialize_transition(t: StatusTransition) -> dict:
+    return {"id": t.id, "item_type_id": t.item_type_id, "from_status_id": t.from_status_id,
+            "to_status_ids": t.to_status_ids or [], "is_active": t.is_active, "version": t.version}

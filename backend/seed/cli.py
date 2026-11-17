@@ -34,11 +34,12 @@ UNIT_TYPES = [  # code, name, order, colour
 
 VIEW = ["org.view", "functions.view", "people.view"]
 WORK_VIEW = ["work.view"]
-WORK_MANAGE = ["work.view", "work.create", "work.manage", "views.share", "dashboards.share"]
+WORK_MANAGE = ["work.view", "work.create", "work.manage", "views.share", "dashboards.share", "demand.decide",
+               "snapshots.manage", "imports.run", "scenarios.use", "templates.share", "api.tokens"]
 ROLES = [  # code, name, scope, permissions, is_default, description
     ("administrator", "Administrator", "all", sorted(PERMISSION_CODES), False,
      "Full access to everything, including settings."),
-    ("executive", "Executive", "all", VIEW + ["audit.view"] + WORK_MANAGE, False,
+    ("executive", "Executive", "all", VIEW + ["audit.view", "snapshots.approve"] + WORK_MANAGE, False,
      "Sees the whole organisation; does not change settings."),
     ("manager", "Manager", "unit", VIEW + ["org.manage", "people.manage"] + WORK_MANAGE, False,
      "Sees and manages their own unit and everything below it."),
@@ -50,7 +51,8 @@ ROLES = [  # code, name, scope, permissions, is_default, description
 ]
 # Permission groups added after a database was first seeded. A built-in role that holds none of a
 # group's codes yet receives its default codes from ROLES; once it holds any, admins' edits are kept.
-LATER_PERMISSION_GROUPS = ["work.", "views.", "dashboards."]
+LATER_PERMISSION_GROUPS = ["work.", "views.", "dashboards.", "demand.", "snapshots.", "imports.", "scenarios.",
+                           "templates.", "api.", "integrations."]
 
 # Default lookup lists: code, name, [(code, label, colour, is_default, is_system)]
 # Colours stay calm: navy accent, muted greys, and red/amber/green only where they mean status.
@@ -88,6 +90,20 @@ LOOKUPS = [
         ("dev", "Development done", NAVY, False, False), ("test", "Testing done", TEAL, False, False),
         ("accepted", "Business acceptance", BROWN, False, False), ("trained", "Users trained", SLATE, False, False),
         ("rollout", "Rolled out", AMBER, False, False), ("adopted", "Adoption achieved", GREEN, False, False)]),
+    ("skill", "Skill", [  # skills on people: find people by skill, assignment suggestions
+        ("backend", "Backend development", NAVY, False, False), ("frontend", "Frontend development", TEAL, False, False),
+        ("mobile", "Mobile development", BROWN, False, False), ("testing", "Testing", SLATE, False, False),
+        ("data", "Data analysis", NAVY, False, False), ("pm", "Project management", BROWN, False, False),
+        ("support", "Customer support", TEAL, False, False)]),
+    ("time_off_type", "Time off", [
+        ("leave", "Leave", AMBER, True, False), ("holiday", "Public holiday", SLATE, False, False),
+        ("training", "Training", TEAL, False, False), ("other", "Other", GREY, False, False)]),
+    ("urgency", "Urgency", [  # the prototype's request urgency
+        ("low", "Low", GREY, False, False), ("medium", "Medium", NAVY, True, False), ("high", "High", AMBER, False, False)]),
+    ("demand_decision", "Request decision", [  # demand intake relies on these codes
+        ("new", "New", NAVY, True, True), ("clarification", "Clarification required", AMBER, False, True),
+        ("accepted", "Accepted", GREEN, False, True), ("rejected", "Rejected", RED, False, True),
+        ("deferred", "Deferred", SLATE, False, True)]),
     ("health", "Health", [  # the health engine relies on these four codes
         ("green", "Green", GREEN, False, True), ("amber", "Amber", AMBER, False, True),
         ("red", "Red", RED, False, True), ("grey", "Grey (no data)", GREY, True, True)]),
@@ -482,6 +498,10 @@ def seed_demo(tenant: Tenant) -> None:
             functions.update(by_code(Function, leads).id, {"lead_id": person[prefix].id}, reason="Demo data")
     seed_demo_work(tenant)
     seed_demo_approvals(tenant)
+    seed_demo_capacity(tenant)
+    seed_demo_demand(tenant)
+    seed_demo_tools(tenant)
+    seed_demo_reporting(tenant)
 
 
 # ---------------------------------------------------------------------- demo work (mirrors the reference prototype)
@@ -585,6 +605,143 @@ def seed_demo_approvals(tenant: Tenant) -> None:
             item.id, {"status_id": published_value_id(tenant.id, "status", "done"), "actual_end": date(2026, 11, 12),
                       "evidence_url": item.evidence_url or "https://docs.example.com/support/triage-rules"},
             reason="Demo data: marked complete")
+
+
+# person, skills, capacity % (100 = full time), backlog person-days
+DEMO_CAPACITY = [
+    ("arjun", ["backend"], 100, 12), ("divya", ["backend", "data"], 100, 8), ("rohan", ["testing"], 50, 5),
+    ("isha", ["mobile", "frontend"], 100, 15), ("kabir", ["testing"], 100, 4), ("leela", ["support"], 100, 6),
+    ("karan", ["backend", "pm"], 100, None), ("neha", ["mobile", "pm"], 100, None), ("sara", ["support", "pm"], 100, None),
+    ("meera", ["pm"], 100, None),
+]
+# title, requester, unit, urgency, priority, effort points, needed in days, decision, value
+DEMO_REQUESTS = [
+    ("Self-service password reset", "sara", "ENG", "high", "high", 120, 60, "new",
+     "Cuts password tickets, about 15% of support volume."),
+    ("Export invoices to the finance system", "ravi", "PLAT", "medium", "medium", None, 90, "clarification",
+     "Finance re-keys invoices by hand every month."),
+    ("Dark mode in the mobile app", "isha", "MOB", "low", "low", 40, 120, "new", "Frequently requested by users."),
+]
+
+
+def seed_demo_capacity(tenant: Tenant) -> None:
+    """Skills, part time, backlog and some leave next week, so the Team & Capacity screen has data."""
+    from datetime import timedelta
+
+    from app.core.dates import today
+    from app.modules.capacity.models import TimeOff
+    from app.modules.capacity.service import TimeOffService
+    from app.modules.config.versioning import published_value_id
+
+    people = {u.email.split("@")[0]: u for u in db.session.scalars(select(User).where(User.tenant_id == tenant.id))}
+    svc = PersonService(None, **_system(tenant))
+    for who, skills, cap, backlog in DEMO_CAPACITY:
+        p = people.get(who)
+        if p is None or p.skill_ids:
+            continue
+        svc.update(p.id, {"skill_ids": [published_value_id(tenant.id, "skill", s) for s in skills],
+                          "capacity_pct": cap, "backlog_days": backlog}, reason="Demo data")
+    if "arjun" in people and not db.session.scalar(select(TimeOff.id).where(TimeOff.tenant_id == tenant.id)):
+        monday = today() + timedelta(days=7 - today().weekday())
+        TimeOffService(None, **_system(tenant)).create({
+            "person_id": people["arjun"].id, "start_date": monday, "end_date": monday + timedelta(days=4),
+            "kind_id": published_value_id(tenant.id, "time_off_type", "leave"), "note": "Annual leave"}, reason="Demo data")
+
+
+def seed_demo_demand(tenant: Tenant) -> None:
+    from datetime import timedelta
+
+    from app.core.dates import today
+    from app.modules.config.versioning import published_value_id
+    from app.modules.demand.models import DemandRequest
+    from app.modules.demand.service import DemandService
+
+    if db.session.scalar(select(DemandRequest.id).where(DemandRequest.tenant_id == tenant.id)):
+        return
+    people = {u.email.split("@")[0]: u for u in db.session.scalars(select(User).where(User.tenant_id == tenant.id))}
+    units = {u.code: u.id for u in db.session.scalars(select(OrgUnit).where(OrgUnit.tenant_id == tenant.id))}
+    svc = DemandService(None, **_system(tenant))
+    for title, who, unit, urgency, priority, effort, days, decision, value in DEMO_REQUESTS:
+        if who not in people or unit not in units:
+            continue
+        r = svc.create({"title": title, "requester_id": people[who].id, "unit_id": units[unit],
+                        "urgency_id": published_value_id(tenant.id, "urgency", urgency),
+                        "priority_id": published_value_id(tenant.id, "priority", priority), "effort_pct": effort,
+                        "needed_by": today() + timedelta(days=days), "business_value": value}, reason="Demo data")
+        if decision != "new":
+            svc.decide(r.id, published_value_id(tenant.id, "demand_decision", decision),
+                       note="How many invoices a month, and which finance system?")
+
+
+# name, icon, kind, url, description, scope {work items by title, unit codes, role codes, item type codes}, extra
+DEMO_TOOLS = [
+    ("Portal design files", "🎨", "link", "https://design.example.com/customer-portal",
+     "Screens and flows for the customer portal.", {"items": ["Customer portal revamp"]}, {}),
+    ("Support knowledge base", "📚", "link", "https://kb.example.com/support",
+     "Articles and macros used by the support teams.", {"units": ["OPS"]}, {}),
+    ("Leave and HR portal", "🏖️", "link", "https://hr.example.com", "Book leave and see your HR records.", {}, {}),
+    ("Budget tracker", "💰", "link", "https://finance.example.com/budgets",
+     "Budget against actuals per initiative. Managers and executives only.", {"roles": ["manager", "executive"]},
+     {"context_params": {"project": "{code}"}}),
+    ("Go-live readiness", "✅", "checklist", None,
+     "Is it ready to go live? Tick what is in place; 80% is the pass mark.", {"types": ["project", "milestone"]},
+     {"definition": {"pass_pct": 80, "items": [
+         "Tested end to end", "User acceptance signed off", "Users trained", "Support team briefed",
+         "Rollback plan agreed"]}}),
+    ("Risk review", "⚠️", "form", None, "Review the objective and key risks together.", {"types": ["project"]},
+     {"definition": {"fields": ["objective", "risks", "remarks"]}}),
+]
+
+
+def seed_demo_tools(tenant: Tenant) -> None:
+    from app.modules.config.versioning import published_value_id
+    from app.modules.tools.models import Tool
+    from app.modules.tools.service import ToolService
+    from app.modules.work.models import WorkItem
+
+    if db.session.scalar(select(Tool.id).where(Tool.tenant_id == tenant.id)):
+        return
+    svc = ToolService(None, **_system(tenant))
+    for n, (name, icon, kind, url, description, scope, extra) in enumerate(DEMO_TOOLS, 1):
+        items = [db.session.scalar(select(WorkItem.id).where(WorkItem.tenant_id == tenant.id, WorkItem.title == t))
+                 for t in scope.get("items", [])]
+        if None in items:
+            continue
+        svc.create({
+            "name": name, "icon": icon, "kind": kind, "url": url, "description": description, "sort_order": n * 10,
+            "work_item_ids": items or None,
+            "unit_ids": [db.session.scalar(select(OrgUnit.id).where(OrgUnit.tenant_id == tenant.id, OrgUnit.code == c))
+                         for c in scope.get("units", [])] or None,
+            "role_ids": [db.session.scalar(select(Role.id).where(Role.tenant_id == tenant.id, Role.code == c))
+                         for c in scope.get("roles", [])] or None,
+            "item_type_ids": [published_value_id(tenant.id, "item_type", c) for c in scope.get("types", [])] or None,
+            **{k: v for k, v in extra.items()},
+        }, reason="Demo data")
+
+
+def seed_demo_reporting(tenant: Tenant) -> None:
+    """An approved baseline snapshot of the demo work, and a shared weekly review on live figures."""
+    from app.modules.dashboards.models import Dashboard
+    from app.modules.presentations.service import PresentationService
+    from app.modules.snapshots.models import Snapshot
+    from app.modules.snapshots.service import SnapshotService
+
+    if db.session.scalar(select(Snapshot.id).where(Snapshot.tenant_id == tenant.id)):
+        return
+    snaps = SnapshotService(None, **_system(tenant))
+    base = snaps.take(label="Baseline", notes="Plan as agreed at the portfolio kick-off.", reason="Demo data")
+    snaps.approve(base.id, reason="Demo data")
+    snaps.set_baseline(base.id, reason="Demo data")
+    overview = db.session.scalar(select(Dashboard).where(Dashboard.tenant_id == tenant.id, Dashboard.is_shared.is_(True)))
+    owner = db.session.scalar(select(User).where(User.email == "asha@demo.local"))
+    if overview is None or owner is None:
+        return
+    PresentationService(None, **_system(tenant)).create({
+        "name": "Weekly portfolio review", "owner_id": owner.id, "is_shared": True, "mode": "live",
+        "description": "Monday management review: health first, then milestones and blockers.",
+        "pages": [{"dashboard_id": overview.id, "title": "Portfolio at a glance",
+                   "notes": "Start with anything red. Ask each owner for the next step and the date."}],
+    }, reason="Demo data")
 
 
 @click.command("seed")

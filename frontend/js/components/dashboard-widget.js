@@ -1,11 +1,13 @@
 /**
  * One dashboard widget, drawn from GET /dashboards/<id>/data.
- *   createWidget(widget, data, { groupLabel }) → <section class="ct-card ct-widget">
- * Every number, bar, slice and row opens the Portfolio list (or item) behind it.
+ *   createWidget(widget, data, { actions, frozen }) → <section class="ct-card ct-widget">
+ * Every number, bar, slice and row opens the Portfolio list (or item) behind it. With `frozen`
+ * (figures from a snapshot) the links to live lists are left out, since today's list would differ.
  */
 import { lookupBadge, lookupValue, lookupValues } from '../core/lookups.js';
 import { el } from '../core/utils.js';
 import { createActionList } from './action-list.js';
+import { createCapacityBars } from './capacity.js';
 import { createChart } from './chart.js';
 import { createEmptyState } from './empty-state.js';
 import { createProgressBar } from './progress-bar.js';
@@ -32,10 +34,11 @@ export function groupDisplay(groupBy, g) {
 
 const go = (filters) => { window.location.href = portfolioUrl(filters); };
 
-function body(widget, data) {
+function body(widget, data, frozen) {
   if (data.error) return createEmptyState({ title: 'This widget cannot be shown', message: data.error, icon: 'shield' });
   switch (widget.type) {
     case 'kpi':
+      if (frozen) return el('div', { class: 'ct-widget__kpi' }, el('b', {}, String(data.value)), el('span', { class: 'ct-muted ct-small' }, data.value === 1 ? 'item' : 'items'));
       return el('a', { class: 'ct-widget__kpi', href: portfolioUrl(data.filters), title: 'Open the list behind this number' },
         el('b', {}, String(data.value)), el('span', { class: 'ct-muted ct-small' }, data.value === 1 ? 'item' : 'items'));
     case 'chart': {
@@ -43,7 +46,7 @@ function body(widget, data) {
       const shown = data.groups.map((g) => groupDisplay(data.group_by, g));
       return createChart({
         type: widget.chart || 'bar', labels: shown.map((s) => s.label), values: data.groups.map((g) => g.count),
-        colors: shown.map((s) => s.color), onClick: (i) => data.groups[i].filters && go(data.groups[i].filters),
+        colors: shown.map((s) => s.color), onClick: frozen ? null : (i) => data.groups[i].filters && go(data.groups[i].filters),
       });
     }
     case 'progress':
@@ -73,15 +76,19 @@ function body(widget, data) {
       }).element;
     case 'actions':
       return createActionList(data.entries, { numbered: true });
+    case 'capacity':
+      return el('div', { class: 'ct-stack', style: { gap: '6px' } },
+        el('div', { class: 'ct-small ct-muted' }, `Free capacity: `, el('strong', {}, `${data.free_pct} pts`), ` across ${data.total} people (buffer ${data.buffer_pct}%)`),
+        createCapacityBars(data.items));
     default:
       return el('p', { class: 'ct-muted' }, 'Unknown widget');
   }
 }
 
-export function createWidget(widget, data, { actions = [] } = {}) {
-  const more = data && !data.error && widget.type !== 'actions' && widget.type !== 'kpi'
+export function createWidget(widget, data, { actions = [], frozen = false } = {}) {
+  const more = !frozen && data && !data.error && !['actions', 'kpi', 'capacity'].includes(widget.type)
     ? el('a', { class: 'ct-small', href: portfolioUrl(data.filters) }, `All ${data.total}`) : null;
   return el('section', { class: `ct-card ct-widget ct-widget--${widget.type}${widget.width === 2 ? ' ct-widget--wide' : ''}` },
     el('div', { class: 'ct-card__header' }, el('h3', { class: 'ct-card__title' }, widget.title), el('div', { class: 'ct-actions' }, more, actions)),
-    el('div', { class: 'ct-card__body' }, data ? body(widget, data) : el('p', { class: 'ct-muted ct-small' }, 'Loading…')));
+    el('div', { class: 'ct-card__body' }, data ? body(widget, data, frozen) : el('p', { class: 'ct-muted ct-small' }, 'Loading…')));
 }

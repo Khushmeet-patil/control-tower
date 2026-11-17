@@ -2,12 +2,13 @@ from flask import Blueprint, request
 from flask_login import current_user
 
 from app.core.permissions import require_permission
-from app.core.schemas import parse_body
+from app.core.schemas import InputSchema, parse_body
 from app.modules.workflows.models import APPROVER_KINDS, WHEN_MISSING
 from app.modules.workflows.schemas import (
     ChainCreateIn, ChainUpdateIn, DecisionIn, ReasonIn, StepCreateIn, StepUpdateIn)
 from app.modules.workflows.service import (
-    ApprovalService, ChainService, StepService, serialize_chain, serialize_step)
+    ApprovalService, ChainService, StepService, TransitionService, serialize_chain, serialize_step,
+    serialize_transition)
 
 bp = Blueprint("workflows", __name__, url_prefix="/api/v1")
 
@@ -101,3 +102,42 @@ def withdraw(request_id):
 def retry(request_id):
     ApprovalService(current_user).retry(request_id)
     return ApprovalService(current_user).detail(request_id)
+
+
+# ---- status transitions (settings draft; enforced once published)
+class TransitionIn(InputSchema):
+    item_type_id: int | None = None
+    from_status_id: int
+    to_status_ids: list[int] = []
+    is_active: bool = True
+    reason: str | None = None
+
+
+class TransitionUpdateIn(InputSchema):
+    item_type_id: int | None = None
+    from_status_id: int | None = None
+    to_status_ids: list[int] | None = None
+    is_active: bool | None = None
+    version: int | None = None
+    reason: str | None = None
+
+
+@bp.get("/status-transitions")
+@require_permission("settings.manage")
+def list_transitions():
+    return {"items": TransitionService(current_user).list_all()}
+
+
+@bp.post("/status-transitions")
+@require_permission("settings.manage")
+def create_transition():
+    data, _, reason = parse_body(TransitionIn, request.get_json())
+    return serialize_transition(TransitionService(current_user).create(data, reason=reason)), 201
+
+
+@bp.patch("/status-transitions/<int:transition_id>")
+@require_permission("settings.manage")
+def update_transition(transition_id):
+    data, version, reason = parse_body(TransitionUpdateIn, request.get_json())
+    t = TransitionService(current_user).update(transition_id, data, expected_version=version, reason=reason)
+    return serialize_transition(t)

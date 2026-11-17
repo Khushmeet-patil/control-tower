@@ -50,14 +50,18 @@ export function openNewWorkItem({ parent = null, onDone } = {}) {
   });
 }
 
-export async function openWorkItemEditor({ item = null, parent = null, itemTypeId = null, onDone } = {}) {
+/**
+ * The work item form's field definitions (also used by form tools, which show a subset of them).
+ * Fields the user may not change on `item` come back disabled.
+ */
+export async function workItemFormFields({ item = null, parent = null, itemTypeId = null } = {}) {
   const { unitOptions, functionOptions } = await loadOrg();
   const typeId = item ? item.item_type_id : itemTypeId;
   const editable = item?.permissions?.editable_fields; // null → everything; [] → nothing
   const locked = (key) => Boolean(item && editable && !editable.includes(key));
   const inheritHelp = parent ? 'Leave empty to use the parent\'s.' : null;
 
-  const fields = [
+  return [
     { key: 'title', label: 'Title', required: true, full: true, maxlength: 300 },
     item ? { key: 'item_type_id', label: 'Type', type: 'select', options: lookupOptions('item_type', typeId), required: true } : null,
     { key: 'status_id', label: 'Status', type: 'select', options: lookupOptions('status', item?.status_id), default: item ? null : defaultLookupValue('status') },
@@ -88,7 +92,12 @@ export async function openWorkItemEditor({ item = null, parent = null, itemTypeI
     }),
     item || parent ? { key: 'reason', label: item ? 'Reason for change' : 'Reason (needed if the accountable owner differs from the parent\'s)', full: true, help: 'Saved in the audit log.' } : null,
   ].filter(Boolean).map((f) => (f.key !== 'reason' && locked(f.key) ? { ...f, disabled: true, required: false } : f));
+}
 
+export async function openWorkItemEditor({ item = null, parent = null, itemTypeId = null, onDone } = {}) {
+  const fields = await workItemFormFields({ item, parent, itemTypeId });
+  const typeId = item ? item.item_type_id : itemTypeId;
+  const editable = item?.permissions?.editable_fields;
   const typeLabel = lookupValue(typeId)?.label || 'item';
   openFormModal({
     title: item ? `${item.code} · ${item.title}` : `New ${typeLabel.toLowerCase()}${parent ? ` under ${parent.code}` : ''}`,

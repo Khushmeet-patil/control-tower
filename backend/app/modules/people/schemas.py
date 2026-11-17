@@ -18,6 +18,10 @@ class PersonCreateIn(InputSchema):
     is_admin: bool = False
     is_active: bool = True
     custom_fields: dict | None = None
+    skill_ids: list[int] | None = None
+    capacity_pct: int | None = Field(default=None, ge=0, le=100)
+    backlog_days: int | None = Field(default=None, ge=0, le=10000)
+    work_days: list[int] | None = None
     reason: str | None = None
 
 
@@ -33,6 +37,10 @@ class PersonUpdateIn(InputSchema):
     is_admin: bool | None = None
     is_active: bool | None = None
     custom_fields: dict | None = None
+    skill_ids: list[int] | None = None
+    capacity_pct: int | None = Field(default=None, ge=0, le=100)
+    backlog_days: int | None = Field(default=None, ge=0, le=10000)
+    work_days: list[int] | None = None
     version: int | None = None
     reason: str | None = None
 

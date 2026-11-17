@@ -133,12 +133,32 @@ class Review:
                     r.planned_end, action_type_id=r.action_type_id)
             elif r.item_type_id == self.milestone and late and self.health(self.top_of(r)):
                 add(3, "Late milestone", r, f"due {r.planned_end:%d %b %Y}", r.planned_end)
+        for req in self.requests_to_decide():
+            points.append({"rank": 4, "type": "Request", "item": {"id": None, "code": req.code, "title": req.title},
+                           "in": None, "owner": person_ref(req.requester), "when": self.decision_label(req),
+                           "sort": req.requested_on.isoformat(), "request_id": req.id})
         progress = progress_map(self.tid, [r.id for r in self.tops_in_delivery()])
         for r in self.tops_in_delivery():
             if not self.next_milestone(r.id) and progress.get(r.id, 0) < 100:
                 add(5, "Setup gap", r, "no next milestone", owner=self.view.person(r.accountable_id))
         points.sort(key=lambda p: (p["rank"], p["sort"], p["item"]["code"]))
         return points
+
+    def requests_to_decide(self):
+        """Requests (new or waiting for clarification) for units this person decides for."""
+        if not hasattr(self, "_requests"):
+            from app.modules.demand.models import DemandRequest
+            from app.modules.demand.service import DemandService
+
+            svc = DemandService(self.actor)
+            awaiting = svc.awaiting_ids()
+            rows = db.session.scalars(svc.base_query().where(DemandRequest.decision_id.in_(awaiting or [0]))
+                                      .order_by(DemandRequest.requested_on)).all()
+            self._requests = [r for r in rows if svc.can_decide(r)]
+        return self._requests
+
+    def decision_label(self, req):
+        return (published_list(self.tid, "demand_decision").get(req.decision_id) or {}).get("label", "")
 
     def watchlist(self):
         """Signals (ready for rollout, built not adopted, quick wins) and stale updates, grouped by rule."""
@@ -149,7 +169,11 @@ class Review:
             for f in (res.findings if res else []):
                 if f.source_id == r.id and (f.kind == "signal" or f.rule_code in stale_rules):
                     watch.setdefault(f.rule_name, []).append(self.view.ref(r.id))
-        return [{"rule": k, "count": len(v), "items": v} for k, v in sorted(watch.items())]
+        out = [{"rule": k, "count": len(v), "items": v} for k, v in sorted(watch.items())]
+        if requests := self.requests_to_decide():
+            out.append({"rule": "Requests awaiting decision", "count": len(requests), "link": "/pages/demand.html?awaiting=1",
+                        "items": [{"id": None, "code": r.code, "title": r.title, "request_id": r.id} for r in requests]})
+        return out
 
     def blockers_and_decisions(self):
         rows = [r for r in self.rows if self.is_open(r) and r.item_type_id == self.action
@@ -179,7 +203,7 @@ class Review:
             stmt = stmt.where(clause)
         people = db.session.scalars(stmt).all()
         usable = 100 - engine.capacity_buffer(self.tid)
-        loads = people_load(self.actor, [p.id for p in people], usable)
+        loads = people_load(self.actor, [p.id for p in people])
         open_actions = {}
         for r in self.rows:
             if r.item_type_id == self.action and self.is_open(r):

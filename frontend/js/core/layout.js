@@ -31,8 +31,18 @@ const NAV = [
       { key: 'work', label: 'Portfolio', href: '/pages/work.html', icon: 'briefcase', perm: 'work.view' },
       { key: 'my-work', label: 'My work', href: '/pages/my-work.html', icon: 'tasks', perm: 'work.view' },
       { key: 'schedule', label: 'Schedule', href: '/pages/schedule.html', icon: 'calendar', perm: 'work.view' },
+      { key: 'actions', label: 'Actions & decisions', href: '/pages/actions.html', icon: 'flag', perm: 'work.view' },
       { key: 'approvals', label: 'Approvals', href: '/pages/approvals.html', icon: 'check', perm: 'work.view' },
       { key: 'team', label: 'My team', href: '/pages/team.html', icon: 'users', perm: 'work.manage' },
+      { key: 'demand', label: 'Demand intake', href: '/pages/demand.html', icon: 'inbox', perm: 'work.view' },
+    ],
+  },
+  {
+    section: 'Planning',
+    items: [
+      { key: 'scenarios', label: 'What-if scenarios', href: '/pages/scenarios.html', icon: 'branch', perm: 'scenarios.use' },
+      { key: 'templates', label: 'Templates', href: '/pages/templates.html', icon: 'copy', perm: 'work.view' },
+      { key: 'holidays', label: 'Holidays', href: '/pages/holidays.html', icon: 'sun', perm: 'people.view' },
     ],
   },
   {
@@ -40,6 +50,14 @@ const NAV = [
     items: [
       { key: 'dashboards', label: 'Dashboards', href: '/pages/dashboards.html', icon: 'chart', perm: 'work.view' },
       { key: 'adoption', label: 'Adoption', href: '/pages/adoption.html', icon: 'flag', perm: 'work.view' },
+      { key: 'snapshots', label: 'Snapshots & trends', href: '/pages/snapshots.html', icon: 'versions', perm: 'work.view' },
+      { key: 'presentations', label: 'Presentations', href: '/pages/presentations.html', icon: 'chart', perm: 'work.view' },
+    ],
+  },
+  {
+    section: 'Tools',
+    items: [
+      { key: 'tools', label: 'Tool Centre', href: '/pages/tools.html', icon: 'grid', perm: 'work.view' },
     ],
   },
   {
@@ -58,9 +76,19 @@ const NAV = [
       { key: 'fields', label: 'Custom fields', href: '/pages/admin/fields.html', icon: 'form', perm: 'settings.manage' },
       { key: 'rules', label: 'Health rules', href: '/pages/admin/rules.html', icon: 'target', perm: 'settings.manage' },
       { key: 'workflows', label: 'Approval chains', href: '/pages/admin/workflows.html', icon: 'check', perm: 'settings.manage' },
+      { key: 'status-flow', label: 'Status flow', href: '/pages/admin/status-flow.html', icon: 'route', perm: 'settings.manage' },
+      { key: 'admin-tools', label: 'Tools registry', href: '/pages/admin/tools.html', icon: 'grid', perm: 'tools.manage' },
       { key: 'terms', label: 'Terminology', href: '/pages/admin/terminology.html', icon: 'type', perm: 'settings.manage' },
       { key: 'versions', label: 'Settings versions', href: '/pages/admin/versions.html', icon: 'versions', perm: 'settings.manage' },
+      { key: 'data', label: 'Data & Backup', href: '/pages/admin/data.html', icon: 'upload', perm: 'imports.run' },
+      { key: 'integrations', label: 'Integrations', href: '/pages/admin/integrations.html', icon: 'plug', perm: 'integrations.manage' },
       { key: 'audit', label: 'Audit log', href: '/pages/admin/audit.html', icon: 'history', perm: 'audit.view' },
+    ],
+  },
+  {
+    section: null,
+    items: [
+      { key: 'help', label: 'Help', href: '/pages/help.html', icon: 'list' },
     ],
   },
 ];
@@ -100,6 +128,8 @@ function buildUserMenu(user) {
     el('div', { class: 'ct-user-menu__info' },
       el('div', { style: { fontWeight: 600 } }, user.full_name),
       el('div', { class: 'ct-muted ct-small' }, user.email)),
+    el('a', { class: 'ct-btn ct-btn--ghost ct-btn--block', style: { justifyContent: 'flex-start' }, role: 'menuitem', href: '/pages/account.html' },
+      icon('settings', { size: 16 }), 'My account & notifications'),
     el('button', { class: 'ct-btn ct-btn--ghost ct-btn--block', style: { justifyContent: 'flex-start' }, role: 'menuitem', onClick: openChangePassword },
       icon('key', { size: 16 }), 'Change password'),
     el('button', { class: 'ct-btn ct-btn--ghost ct-btn--block', style: { justifyContent: 'flex-start' }, role: 'menuitem', onClick: logout },
@@ -119,6 +149,55 @@ function buildUserMenu(user) {
     trigger.setAttribute('aria-expanded', 'false');
   });
   return el('div', { class: 'ct-user-menu' }, trigger, panel);
+}
+
+/** The bell: unread notifications, the latest few in a panel, refreshed every minute. */
+function buildBell() {
+  const count = el('span', { class: 'ct-bell__count ct-hidden' });
+  const list = el('div', { class: 'ct-bell__list' });
+  const panel = el('div', { class: 'ct-bell__panel ct-hidden', role: 'dialog', 'aria-label': 'Notifications' },
+    el('div', { class: 'ct-bell__head' }, el('strong', {}, 'Notifications'),
+      el('button', { class: 'ct-link-button ct-small', type: 'button', onClick: async () => {
+        const { api } = await import('./api.js');
+        await api.post('/notifications/read', { all: true }).catch(() => null);
+        refresh();
+        load();
+      } }, 'Mark all read')),
+    list,
+    el('a', { class: 'ct-bell__all', href: '/pages/notifications.html' }, 'See all notifications'));
+  const trigger = el('button', {
+    class: 'ct-btn ct-btn--ghost ct-btn--icon ct-bell', type: 'button', 'aria-label': 'Notifications', 'aria-haspopup': 'true',
+    onClick: (e) => {
+      e.stopPropagation();
+      const open = panel.classList.toggle('ct-hidden') === false;
+      if (open) load();
+    },
+  }, icon('bell'), count);
+  panel.addEventListener('click', (e) => e.stopPropagation());
+  document.addEventListener('click', () => panel.classList.add('ct-hidden'));
+
+  async function refresh() {
+    try {
+      const { api } = await import('./api.js');
+      const { unread } = await api.get('/notifications/count');
+      count.textContent = unread > 99 ? '99+' : String(unread);
+      count.classList.toggle('ct-hidden', !unread);
+      trigger.setAttribute('aria-label', unread ? `Notifications, ${unread} unread` : 'Notifications');
+    } catch { /* a count must never break the page */ }
+  }
+  async function load() {
+    list.replaceChildren(el('p', { class: 'ct-muted ct-small', style: { padding: '8px 12px' } }, 'Loading…'));
+    try {
+      const { api } = await import('./api.js');
+      const { renderNotification } = await import('../components/notification.js');
+      const data = await api.get('/notifications', { per_page: 8 });
+      list.replaceChildren(...(data.items.length ? data.items.map((n) => renderNotification(n, { compact: true, onRead: refresh }))
+        : [el('p', { class: 'ct-muted ct-small', style: { padding: '8px 12px' } }, 'Nothing new.')]));
+    } catch { list.replaceChildren(el('p', { class: 'ct-muted ct-small', style: { padding: '8px 12px' } }, 'Could not load notifications.')); }
+  }
+  refresh();
+  setInterval(() => { if (!document.hidden) refresh(); }, 60000);
+  return el('div', { class: 'ct-bell-wrap' }, trigger, panel);
 }
 
 /** Search work from any page (opens the Portfolio filtered by the text). */
@@ -165,15 +244,18 @@ export async function initLayout({ active, title, permission }) {
     el('div', { class: 'ct-topbar__title' }, title),
     can(user, 'work.view') ? buildSearch() : null,
     can(user, 'work.create') ? buildQuickAdd() : null,
+    buildBell(),
     buildUserMenu(user));
 
-  app.append(buildSidebar(active, user), el('div', { class: 'ct-main' }, topbar, content));
+  const notices = el('div', { class: 'ct-notices' });
+  app.append(buildSidebar(active, user), el('div', { class: 'ct-main' }, topbar, notices, content));
   app.addEventListener('click', (e) => {
     if (app.classList.contains('is-nav-open') && !e.target.closest('.ct-sidebar')) app.classList.remove('is-nav-open');
   });
 
   document.body.replaceChildren(app);
   if (can(user, 'work.view')) refreshApprovalCount();
+  if (can(user, 'settings.manage')) showBackupReminder(notices);
 
   // Page-level guard: the server enforces access anyway; this avoids showing a page the user cannot use.
   if (!can(user, permission)) {
@@ -187,6 +269,29 @@ export async function initLayout({ active, title, permission }) {
     return new Promise(() => {}); // stop the page here
   }
   return { user, content };
+}
+
+/** Administrators: a reminder when the scheduled backup has not run for a while (the prototype's
+ *  backup banner; backups themselves are taken on the server by `flask backup`). Hidden for the
+ *  rest of the browser session once dismissed. */
+async function showBackupReminder(slot) {
+  try {
+    if (sessionStorage.getItem('ct-backup-reminder') === 'hidden') return;
+  } catch { /* storage may be blocked; show the reminder */ }
+  try {
+    const { api } = await import('./api.js');
+    const s = await api.get('/backups');
+    if (!s.overdue) return;
+    const text = s.last ? `The last backup was ${s.age_days} days ago.` : 'No backup has been taken yet.';
+    const notice = el('div', { class: 'ct-notice ct-notice--warning', role: 'status' },
+      el('span', { class: 'ct-notice__text' }, `${text} Check that the scheduled backup job is running.`),
+      el('a', { class: 'ct-btn ct-btn--sm', href: '/pages/admin/data.html#backups' }, 'Backups'),
+      el('button', { class: 'ct-btn ct-btn--sm ct-btn--ghost', onClick: () => {
+        notice.remove();
+        try { sessionStorage.setItem('ct-backup-reminder', 'hidden'); } catch { /* ignore */ }
+      } }, 'Dismiss'));
+    slot.append(notice);
+  } catch { /* a reminder must never block the page */ }
 }
 
 /** Number of approvals waiting for the user, shown next to "Approvals" in the sidebar. */

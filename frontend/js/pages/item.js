@@ -3,7 +3,7 @@
 import { api } from '../core/api.js';
 import { icon } from '../core/icons.js';
 import { initLayout, refreshApprovalCount } from '../core/layout.js';
-import { customFields, lookupBadge, lookupOptions, lookupValue } from '../core/lookups.js';
+import { customFields, lookupBadge, lookupOptions, lookupValue, lookupValues } from '../core/lookups.js';
 import { el, formatDate, formatDateTime, formatValue, humanize } from '../core/utils.js';
 import { approvalBadge, createStepTracker, openComplete, openReview, openWithdraw, waitingOn } from '../components/approval.js';
 import { customValueNode } from '../components/custom-fields.js';
@@ -16,10 +16,12 @@ import { createPersonCell } from '../components/person.js';
 import { createProgressBar } from '../components/progress-bar.js';
 import { createTabs } from '../components/tabs.js';
 import { createAdoptionChecklist } from '../components/adoption.js';
-import { createTimeline } from '../components/timeline.js';
+import { loadColor } from '../components/capacity.js';
+import { createGantt } from '../components/gantt.js';
 import { showError, showToast } from '../components/toast.js';
 import { createWorkTable, overdueBadge, safeLink } from '../components/work-table.js';
 import { openNewWorkItem, openWorkItemEditor } from '../components/work-item-form.js';
+import { createToolGrid } from '../components/tools.js';
 
 const { content } = await initLayout({ active: 'work', title: 'Work item', permission: 'work.view' });
 const params = new URLSearchParams(location.search);
@@ -54,6 +56,8 @@ async function render(tab) {
     perms.can_complete ? el('button', { class: 'ct-btn', onClick: () => openComplete(item, { onDone: () => reload(item.child_count ? null : 'approvals') }) }, icon('check', { size: 16 }), 'Mark complete') : null,
     perms.can_edit ? el('button', { class: 'ct-btn', onClick: () => openWorkItemEditor({ item, onDone: () => reload() }) }, icon('edit', { size: 16 }), 'Edit') : null,
     perms.can_add_child ? el('button', { class: 'ct-btn ct-btn--primary', onClick: () => openNewWorkItem({ parent: item, onDone: () => reload('children') }) }, icon('plus', { size: 16 }), 'Add child') : null,
+    perms.can_add_child ? el('button', { class: 'ct-btn', title: 'Add a ready-made breakdown under this item', onClick: () => addFromTemplate(item, () => reload('children')) }, icon('copy', { size: 16 }), 'From template') : null,
+    el('button', { class: 'ct-btn', title: 'Reuse this item and its breakdown later', onClick: () => saveAsTemplate(item) }, 'Save as template'),
     perms.can_delete ? el('button', { class: 'ct-btn ct-btn--danger', onClick: () => remove(item) }, icon('trash', { size: 16 }), 'Delete') : null,
   ];
 
@@ -94,6 +98,7 @@ async function render(tab) {
       { key: 'children', label: `Work breakdown (${item.child_count})`, render: () => childrenTab(item, reload) },
       { key: 'people', label: 'People', render: () => peopleTab(item, reload) },
       { key: 'approvals', label: 'Approvals', render: () => approvalsTab(item, reload) },
+      { key: 'tools', label: 'Tools', render: () => toolsTab(item, reload) },
       { key: 'history', label: 'History', render: () => historyTab(item) },
     ],
     active: currentTab,
@@ -152,8 +157,13 @@ function detailsTab(item) {
 function childrenTab(item, reload) {
   const wrap = el('div', { class: 'ct-stack' });
   const timelineSlot = el('div');
-  api.get('/work-items', { parent_id: item.id, per_page: 200, sort: 'planned_end' }).then((data) => {
-    const timeline = createTimeline(data.items, {
+  api.get('/work-items', { parent_id: item.id, per_page: 200, sort: 'planned_end' }).then(async (data) => {
+    const ids = data.items.map((i) => i.id).join(',');
+    const links = ids ? (await api.get('/work-items/dependencies', { ids }).catch(() => ({ items: [] }))).items : [];
+    const milestone = lookupValues('item_type').find((t) => t.code === 'milestone')?.id;
+    const timeline = createGantt(data.items, {
+      links,
+      isMilestone: (i) => i.item_type_id === milestone,
       label: (i) => `${i.code} ${i.title}`,
       color: (i) => (i.is_overdue ? 'var(--ct-danger)' : lookupValue(i.status_id)?.color),
       onClick: (i) => { location.href = `/pages/item.html?id=${i.id}`; },
@@ -212,7 +222,25 @@ function peopleTab(item, reload) {
     return el('span', { class: over ? 'ct-text-danger' : null, title: `${load.items} open item(s)` }, `${load.pct}%`, over ? ' (over 100%)' : '');
   }
 
-  function assignmentForm(existing) {
+  /** Who could take this on: people in the item's unit, most free capacity first (skills optional). */
+  function suggestionsPanel(onPick) {
+    const list = el('div', { class: 'ct-suggestions' }, el('p', { class: 'ct-muted ct-small' }, 'Loading suggestions…'));
+    const skill = el('select', { class: 'ct-select', 'aria-label': 'Skill', style: { maxWidth: '220px' }, onChange: () => load() },
+      el('option', { value: '' }, 'Any skill'), lookupOptions('skill').map((o) => el('option', { value: o.value }, o.label)));
+    const load = () => api.get(`/work-items/${item.id}/assignment-suggestions`, { skill_ids: skill.value }).then((d) => {
+      list.replaceChildren(...(d.items.length ? d.items.map((r) => el('div', { class: 'ct-suggestion' },
+        el('div', {}, createPersonCell(r.person, [r.person.job_title, r.skill_ids.map((id) => lookupValue(id)?.label).filter(Boolean).join(', ')].filter(Boolean).join(' · '))),
+        el('div', { title: `${r.load_pct}% allocated of ${r.usable_pct}% usable` }, createProgressBar(r.load_pct, { color: loadColor(r.status) }),
+          el('div', { class: 'ct-muted ct-small' }, `${r.free_pct}% free`)),
+        el('button', { class: 'ct-btn ct-btn--sm', type: 'button', onClick: () => onPick(r.person) }, 'Choose')))
+        : [el('p', { class: 'ct-muted ct-small' }, 'Nobody in this unit has the skill and is available.')]));
+    }).catch(() => list.replaceChildren(el('p', { class: 'ct-muted ct-small' }, 'Suggestions are not available.')));
+    load();
+    return el('div', { class: 'ct-field ct-field--full' },
+      el('div', { class: 'ct-detail-head' }, el('span', { class: 'ct-label' }, 'Suggested (most free capacity first)'), skill), list);
+  }
+
+  function assignmentForm(existing, preset = null) {
     const loadNote = el('div', { class: 'ct-field__help' }, existing ? '' : 'Pick a person to see their current load.');
     const showLoad = async (person) => {
       if (!person) { loadNote.textContent = ''; return; }
@@ -224,7 +252,7 @@ function peopleTab(item, reload) {
     const modal = openFormModal({
       title: existing ? `Assignment · ${existing.person.full_name}` : `Assign a person to ${item.code}`,
       fields: [
-        { key: 'person_id', label: 'Person', type: 'person', required: true, value: existing?.person || null, onChange: showLoad, full: true },
+        { key: 'person_id', label: 'Person', type: 'person', required: true, value: existing?.person || preset, onChange: showLoad, full: true },
         { key: 'role_id', label: 'Functional role', type: 'select', options: lookupOptions('functional_role', existing?.role_id) },
         { key: 'allocation_pct', label: 'Allocation %', type: 'number', required: true, help: 'Share of their time on this item.' },
         { key: 'start_date', label: 'From', type: 'date', help: 'Empty = from now.' },
@@ -240,6 +268,11 @@ function peopleTab(item, reload) {
       onDone: () => { showToast(existing ? 'Assignment updated' : 'Person assigned', 'success'); reload('people'); },
     });
     modal.element.querySelector('.ct-picker')?.closest('.ct-field')?.append(loadNote);
+    if (preset) showLoad(preset);
+    if (!existing) {
+      modal.element.querySelector('.ct-picker')?.closest('.ct-field')?.after(
+        suggestionsPanel((person) => { modal.close(); assignmentForm(null, person); }));
+    }
   }
   const editAssignment = (a) => assignmentForm(a);
 
@@ -298,12 +331,28 @@ function historyValue(field, value) {
   return formatValue(value);
 }
 
+const HISTORY_PREFIX = { assignment: 'Assignment ', tool_response: 'Checklist ' };
+
+// ------------------------------------------------------------------ tools
+/** Tools that apply to this item: links open (logged), forms and checklists save to it. */
+function toolsTab(item, reload) {
+  const slot = el('div', {}, el('p', { class: 'ct-muted' }, 'Loading tools…'));
+  api.get('/tools', { work_item_id: item.id }).then((data) => {
+    slot.replaceChildren(data.items.length
+      ? el('div', { class: 'ct-stack' },
+        el('p', { class: 'ct-muted ct-small' }, 'Tools for this item. Opening a tool is recorded; forms and checklists save here and show in History.'),
+        createToolGrid(data.items, { item, onChanged: () => reload('tools') }))
+      : createEmptyState({ title: 'No tools for this item', message: 'Tools linked to this item, its unit or its type appear here.', icon: 'grid' }));
+  }).catch((err) => slot.replaceChildren(createEmptyState({ title: 'Could not load tools', message: err.message })));
+  return slot;
+}
+
 function historyTab(item) {
   return createDataTable({
     columns: [
       { key: 'occurred_at', label: 'When', render: (e) => formatDateTime(e.occurred_at) },
       { key: 'actor_name', label: 'Who', render: (e) => e.actor_name || 'System' },
-      { key: 'what', label: 'What', render: (e) => `${e.entity_type === 'assignment' ? 'Assignment ' : ''}${e.field ? humanize(e.field.replace(/_id(s)?$/, '$1')) : humanize(e.operation)}` },
+      { key: 'what', label: 'What', render: (e) => `${HISTORY_PREFIX[e.entity_type] || ''}${e.field ? humanize(e.field.replace(/_id(s)?$/, '$1')) : humanize(e.operation)}` },
       { key: 'change', label: 'Change', render: (e) => (e.field
         ? el('span', {}, el('span', { class: 'ct-diff-old' }, historyValue(e.field, e.old_value)), ' → ', el('span', { class: 'ct-diff-new' }, historyValue(e.field, e.new_value)))
         : e.operation === 'create' ? 'Created' : humanize(e.operation)) },
@@ -343,4 +392,37 @@ if (!itemId) {
   content.append(createEmptyState({ title: 'No item selected', action: el('a', { class: 'ct-btn', href: '/pages/work.html' }, 'Open Portfolio') }));
 } else {
   render();
+}
+
+// ------------------------------------------------------------------ templates (Phase 10)
+function saveAsTemplate(item) {
+  openFormModal({
+    title: `Save ${item.code} as a template`,
+    intro: 'The item and everything under it that you can see is saved with its timing (days from its start), not its people or status.',
+    fields: [
+      { key: 'name', label: 'Template name', required: true, full: true },
+      { key: 'description', label: 'Description', type: 'textarea' },
+    ],
+    values: { name: item.title },
+    onSubmit: (v) => api.post('/templates/from-item', { work_item_id: item.id, ...v }),
+    onDone: (t) => showToast(`Saved as template “${t.name}” (${t.node_count} items)`, 'success'),
+  });
+}
+
+async function addFromTemplate(item, onDone) {
+  let templates;
+  try { templates = (await api.get('/templates', { per_page: 100 })).items; } catch (err) { showError(err); return; }
+  if (!templates.length) { showToast('No templates yet. Save one from an item, or make one under Templates.', 'info'); return; }
+  openFormModal({
+    title: `Add from a template under ${item.code}`,
+    fields: [
+      { key: 'template', label: 'Template', type: 'select', required: true, options: templates.map((t) => ({ value: t.id, label: `${t.name} (${t.node_count} items)` })), full: true },
+      { key: 'start_date', label: 'Start date', type: 'date', help: 'The template\'s dates count from this day.' },
+      { key: 'title', label: 'Name of the top item (optional)' },
+    ],
+    values: { start_date: item.planned_start },
+    submitLabel: 'Add',
+    onSubmit: (v) => api.post(`/templates/${v.template}/use`, { parent_id: item.id, start_date: v.start_date || null, title: v.title || null }),
+    onDone: (res) => { showToast(`Added ${res.items.map((i) => i.code).join(', ')}`, 'success'); onDone(); },
+  });
 }
