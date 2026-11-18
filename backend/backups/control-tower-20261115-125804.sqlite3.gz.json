@@ -1,0 +1,16 @@
+{
+  "file": "control-tower-20261115-125804.sqlite3.gz",
+  "kind": "sqlite",
+  "created_at": "2026-11-15T12:58:04",
+  "bytes": 95238,
+  "sha256": "23fa13f766989e6a3b2eec6a55ef014639b64daefe0c8f4e192aa67f739628e2",
+  "schema_revision": "c4d7b48c918c",
+  "row_counts": {
+    "users": 14,
+    "work_items": 11,
+    "assignments": 6,
+    "audit_events": 295,
+    "snapshots": 1
+  },
+  "verified": true
+}
