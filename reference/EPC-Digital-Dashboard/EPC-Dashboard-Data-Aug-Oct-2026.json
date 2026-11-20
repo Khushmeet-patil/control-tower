@@ -1,0 +1,1181 @@
+{
+    "tab": "ov",
+    "sel": null,
+    "team": [
+        {
+            "id": "t1",
+            "n": "Team Member 1",
+            "r": "Digital Twin Lead (EPSILON)",
+            "cap": 40
+        },
+        {
+            "id": "t2",
+            "n": "Team Member 2",
+            "r": "Planning & XPP Specialist",
+            "cap": 40
+        },
+        {
+            "id": "t3",
+            "n": "Team Member 3",
+            "r": "Data & Integration Engineer",
+            "cap": 40
+        },
+        {
+            "id": "t4",
+            "n": "Team Member 4",
+            "r": "AI / ML Engineer",
+            "cap": 40
+        },
+        {
+            "id": "t5",
+            "n": "Team Member 5",
+            "r": "Project Data Handover Coordinator",
+            "cap": 40
+        },
+        {
+            "id": "t6",
+            "n": "Team Member 6",
+            "r": "Dashboard & Analytics Developer",
+            "cap": 40
+        }
+    ],
+    "tasks": [
+        {
+            "id": "aio8xq7",
+            "t": "XPP evaluation with real use case (CRPO 160 schedules)",
+            "who": "t2",
+            "init": "e1",
+            "ps": "2026-08-03",
+            "due": "2026-11-30",
+            "hrs": 120,
+            "st": "Doing",
+            "pc": 70,
+            "as": "2026-08-10",
+            "af": "",
+            "la": {
+                "d30": "Complete evaluation report and fit-gap vs PCIS",
+                "d60": "Present XPP recommendation to management",
+                "d90": "Roll-out plan for planning teams"
+            },
+            "files": []
+        },
+        {
+            "id": "qcnsksv",
+            "t": "S-curve dashboards - Engineering & Procurement (cross-check vs Excel)",
+            "who": "t6",
+            "init": "e1",
+            "ps": "2026-08-03",
+            "due": "2026-10-15",
+            "hrs": 80,
+            "st": "Done",
+            "pc": 100,
+            "as": "2026-08-05",
+            "af": "2026-10-14",
+            "la": {
+                "d30": "",
+                "d60": "",
+                "d90": ""
+            },
+            "files": []
+        },
+        {
+            "id": "rjak1gx",
+            "t": "Import ADNOC 90-day schedule into EPSILON (pilot)",
+            "who": "t2",
+            "init": "e1",
+            "ps": "2026-09-01",
+            "due": "2026-10-31",
+            "hrs": 40,
+            "st": "Done",
+            "pc": 100,
+            "as": "2026-09-03",
+            "af": "2026-10-28",
+            "la": {
+                "d30": "",
+                "d60": "",
+                "d90": ""
+            },
+            "files": []
+        },
+        {
+            "id": "jylp6z4",
+            "t": "Explore XPP module with 25 Dassault evaluation licences",
+            "who": "t1",
+            "init": "e1",
+            "ps": "2026-10-01",
+            "due": "2026-11-30",
+            "hrs": 60,
+            "st": "Doing",
+            "pc": 60,
+            "as": "2026-10-05",
+            "af": "",
+            "la": {
+                "d30": "Close evaluation and collect user feedback",
+                "d60": "Decide on licence procurement",
+                "d90": ""
+            },
+            "files": []
+        },
+        {
+            "id": "g9ybcou",
+            "t": "Auto progress update - DS development and validation",
+            "who": "t3",
+            "init": "e1",
+            "ps": "2026-09-15",
+            "due": "2026-12-31",
+            "hrs": 90,
+            "st": "Doing",
+            "pc": 30,
+            "as": "2026-09-20",
+            "af": "",
+            "la": {
+                "d30": "Validate first DS build",
+                "d60": "Pilot on live schedule",
+                "d90": "Production release"
+            },
+            "files": []
+        },
+        {
+            "id": "vyebe3z",
+            "t": "Mass upload programming and template creation (with DS)",
+            "who": "t3",
+            "init": "e1",
+            "ps": "2026-10-01",
+            "due": "2026-12-31",
+            "hrs": 80,
+            "st": "To Do",
+            "pc": 0,
+            "as": "",
+            "af": "",
+            "la": {
+                "d30": "Agree approach with DS",
+                "d60": "Test templates",
+                "d90": "Roll out templates"
+            },
+            "files": []
+        },
+        {
+            "id": "ldcidsb",
+            "t": "Resolve 5000-activity loading limit and 4D dashboard queries with DS",
+            "who": "t1",
+            "init": "e1",
+            "ps": "2026-09-01",
+            "due": "2026-12-15",
+            "hrs": 40,
+            "st": "Doing",
+            "pc": 25,
+            "as": "2026-09-10",
+            "af": "",
+            "la": {
+                "d30": "Close DS follow-ups",
+                "d60": "",
+                "d90": ""
+            },
+            "files": []
+        },
+        {
+            "id": "u8h1kwa",
+            "t": "CRPO 145-146 support - progress data and 3D models always updated",
+            "who": "t5",
+            "init": "e1",
+            "ps": "2026-08-01",
+            "due": "2026-12-31",
+            "hrs": 160,
+            "st": "Doing",
+            "pc": 75,
+            "as": "2026-08-03",
+            "af": "",
+            "la": {
+                "d30": "Continue weekly data refresh",
+                "d60": "Continue weekly data refresh",
+                "d90": "Continue weekly data refresh"
+            },
+            "files": []
+        },
+        {
+            "id": "cm6xbq2",
+            "t": "Integration of EPSILON with ProwPack",
+            "who": "t3",
+            "init": "e2",
+            "ps": "2026-08-01",
+            "due": "2026-09-30",
+            "hrs": 120,
+            "st": "Done",
+            "pc": 100,
+            "as": "2026-08-03",
+            "af": "2026-09-25",
+            "la": {
+                "d30": "",
+                "d60": "",
+                "d90": ""
+            },
+            "files": []
+        },
+        {
+            "id": "hgneaz9",
+            "t": "Enhance AWP dashboards",
+            "who": "t6",
+            "init": "e2",
+            "ps": "2026-09-15",
+            "due": "2026-11-15",
+            "hrs": 60,
+            "st": "Done",
+            "pc": 100,
+            "as": "2026-09-18",
+            "af": "2026-11-10",
+            "la": {
+                "d30": "",
+                "d60": "",
+                "d90": ""
+            },
+            "files": []
+        },
+        {
+            "id": "hb5hcpt",
+            "t": "AWP dashboard refinements from user feedback",
+            "who": "t6",
+            "init": "e2",
+            "ps": "2026-11-16",
+            "due": "2026-12-31",
+            "hrs": 40,
+            "st": "To Do",
+            "pc": 0,
+            "as": "",
+            "af": "",
+            "la": {
+                "d30": "Collect user feedback",
+                "d60": "Implement refinements",
+                "d90": ""
+            },
+            "files": []
+        },
+        {
+            "id": "6lpdw5e",
+            "t": "CFIHOS templates filling (Project team)",
+            "who": "t5",
+            "init": "e3",
+            "ps": "2026-09-01",
+            "due": "2026-12-15",
+            "hrs": 100,
+            "st": "Doing",
+            "pc": 50,
+            "as": "2026-09-05",
+            "af": "",
+            "la": {
+                "d30": "Complete remaining templates",
+                "d60": "Review with client requirements",
+                "d90": ""
+            },
+            "files": []
+        },
+        {
+            "id": "ctig7tv",
+            "t": "2D-3D linkages (Project team)",
+            "who": "t5",
+            "init": "e3",
+            "ps": "2026-09-01",
+            "due": "2026-12-31",
+            "hrs": 120,
+            "st": "Doing",
+            "pc": 40,
+            "as": "2026-09-10",
+            "af": "",
+            "la": {
+                "d30": "Continue linkages",
+                "d60": "Complete linkages",
+                "d90": ""
+            },
+            "files": []
+        },
+        {
+            "id": "6648qzh",
+            "t": "Handover data validation and QA in EPSILON",
+            "who": "t1",
+            "init": "e3",
+            "ps": "2026-12-01",
+            "due": "2027-01-31",
+            "hrs": 60,
+            "st": "To Do",
+            "pc": 0,
+            "as": "",
+            "af": "",
+            "la": {
+                "d30": "",
+                "d60": "Validate handover data",
+                "d90": "Final QA and handover"
+            },
+            "files": []
+        },
+        {
+            "id": "ehox6vi",
+            "t": "KOM and D-Twin alignment meeting with client PMT (EPSILON showcase)",
+            "who": "t1",
+            "init": "e4",
+            "ps": "2026-08-15",
+            "due": "2026-09-30",
+            "hrs": 30,
+            "st": "Done",
+            "pc": 100,
+            "as": "2026-08-20",
+            "af": "2026-09-25",
+            "la": {
+                "d30": "",
+                "d60": "",
+                "d90": ""
+            },
+            "files": []
+        },
+        {
+            "id": "xpp20rv",
+            "t": "Present EPSILON roadmap to Project Directors and Managers",
+            "who": "t1",
+            "init": "e4",
+            "ps": "2026-09-15",
+            "due": "2026-10-15",
+            "hrs": 20,
+            "st": "Done",
+            "pc": 100,
+            "as": "2026-09-20",
+            "af": "2026-10-10",
+            "la": {
+                "d30": "",
+                "d60": "",
+                "d90": ""
+            },
+            "files": []
+        },
+        {
+            "id": "5gex1gv",
+            "t": "Scope understanding",
+            "who": "t1",
+            "init": "e4",
+            "ps": "2026-08-15",
+            "due": "2026-10-15",
+            "hrs": 40,
+            "st": "Done",
+            "pc": 100,
+            "as": "2026-08-20",
+            "af": "2026-10-12",
+            "la": {
+                "d30": "",
+                "d60": "",
+                "d90": ""
+            },
+            "files": []
+        },
+        {
+            "id": "04ogsq0",
+            "t": "Prepare Digital Twin project execution plan",
+            "who": "t1",
+            "init": "e4",
+            "ps": "2026-10-15",
+            "due": "2026-12-15",
+            "hrs": 80,
+            "st": "Doing",
+            "pc": 45,
+            "as": "2026-10-18",
+            "af": "",
+            "la": {
+                "d30": "Finalise execution plan",
+                "d60": "Obtain approval",
+                "d90": "Start execution"
+            },
+            "files": []
+        },
+        {
+            "id": "pudqh8x",
+            "t": "Progress dashboards and 3D models in EPSILON for client PMT preview",
+            "who": "t6",
+            "init": "e4",
+            "ps": "2026-10-20",
+            "due": "2026-12-31",
+            "hrs": 100,
+            "st": "Doing",
+            "pc": 20,
+            "as": "2026-10-25",
+            "af": "",
+            "la": {
+                "d30": "Build first dashboards",
+                "d60": "Demo to client PMT",
+                "d90": ""
+            },
+            "files": []
+        },
+        {
+            "id": "uugy3ad",
+            "t": "Evaluate OCTAVE UAE technical proposal",
+            "who": "t1",
+            "init": "e4",
+            "ps": "2026-10-01",
+            "due": "2026-11-30",
+            "hrs": 30,
+            "st": "Doing",
+            "pc": 60,
+            "as": "2026-10-05",
+            "af": "",
+            "la": {
+                "d30": "Complete evaluation and decide",
+                "d60": "",
+                "d90": ""
+            },
+            "files": []
+        },
+        {
+            "id": "meuqsig",
+            "t": "AR/VR discussions with Attral",
+            "who": "t1",
+            "init": "e4",
+            "ps": "2026-10-15",
+            "due": "2026-12-31",
+            "hrs": 20,
+            "st": "Doing",
+            "pc": 20,
+            "as": "2026-10-20",
+            "af": "",
+            "la": {
+                "d30": "Define AR/VR use cases",
+                "d60": "Obtain proposal",
+                "d90": ""
+            },
+            "files": []
+        },
+        {
+            "id": "7ema7ne",
+            "t": "KOM demo - interface management through EPSILON",
+            "who": "t1",
+            "init": "e5",
+            "ps": "2026-09-01",
+            "due": "2026-09-30",
+            "hrs": 20,
+            "st": "Done",
+            "pc": 100,
+            "as": "2026-09-05",
+            "af": "2026-09-28",
+            "la": {
+                "d30": "",
+                "d60": "",
+                "d90": ""
+            },
+            "files": []
+        },
+        {
+            "id": "0d5w69k",
+            "t": "Internal adoption of EPSILON interface management",
+            "who": "t3",
+            "init": "e5",
+            "ps": "2026-10-01",
+            "due": "2026-12-31",
+            "hrs": 80,
+            "st": "Doing",
+            "pc": 40,
+            "as": "2026-10-05",
+            "af": "",
+            "la": {
+                "d30": "Extend to more interfaces",
+                "d60": "Review adoption",
+                "d90": ""
+            },
+            "files": []
+        },
+        {
+            "id": "i4tje07",
+            "t": "Client adoption - ADNOC security approval of platform",
+            "who": "t1",
+            "init": "e5",
+            "ps": "2026-10-01",
+            "due": "2026-12-31",
+            "hrs": 40,
+            "st": "Doing",
+            "pc": 10,
+            "as": "2026-10-05",
+            "af": "",
+            "la": {
+                "d30": "Follow up approval status",
+                "d60": "Support security review",
+                "d90": "Client roll-out on approval"
+            },
+            "files": []
+        },
+        {
+            "id": "d7pz5ew",
+            "t": "Plan and conduct DSI workshops (next 3 months)",
+            "who": "t1",
+            "init": "e6",
+            "ps": "2026-11-16",
+            "due": "2027-02-15",
+            "hrs": 90,
+            "st": "To Do",
+            "pc": 0,
+            "as": "",
+            "af": "",
+            "la": {
+                "d30": "Schedule first workshops",
+                "d60": "Conduct workshops",
+                "d90": "Consolidate outcomes"
+            },
+            "files": []
+        },
+        {
+            "id": "jwga4di",
+            "t": "Define data collection strategy",
+            "who": "t3",
+            "init": "e6",
+            "ps": "2026-10-15",
+            "due": "2026-12-15",
+            "hrs": 60,
+            "st": "Doing",
+            "pc": 30,
+            "as": "2026-10-20",
+            "af": "",
+            "la": {
+                "d30": "Finalise strategy",
+                "d60": "Start data collection",
+                "d90": ""
+            },
+            "files": []
+        },
+        {
+            "id": "ue362dm",
+            "t": "SearchWell2 chatbot - all tables data",
+            "who": "t4",
+            "init": "a1",
+            "ps": "2026-08-01",
+            "due": "2026-10-15",
+            "hrs": 200,
+            "st": "Done",
+            "pc": 100,
+            "as": "2026-08-03",
+            "af": "2026-10-10",
+            "la": {
+                "d30": "",
+                "d60": "",
+                "d90": ""
+            },
+            "files": []
+        },
+        {
+            "id": "8ns0ezd",
+            "t": "Demo of SearchWell2 to Engineering team",
+            "who": "t4",
+            "init": "a1",
+            "ps": "2026-10-10",
+            "due": "2026-10-31",
+            "hrs": 16,
+            "st": "Done",
+            "pc": 100,
+            "as": "2026-10-15",
+            "af": "2026-10-25",
+            "la": {
+                "d30": "",
+                "d60": "",
+                "d90": ""
+            },
+            "files": []
+        },
+        {
+            "id": "8m99a48",
+            "t": "Old-to-new server migration (Engineering dept dependency)",
+            "who": "t3",
+            "init": "a1",
+            "ps": "2026-10-25",
+            "due": "2026-12-15",
+            "hrs": 40,
+            "st": "To Do",
+            "pc": 0,
+            "as": "",
+            "af": "",
+            "la": {
+                "d30": "Follow up with Engineering dept",
+                "d60": "Migrate to new server",
+                "d90": ""
+            },
+            "files": []
+        },
+        {
+            "id": "v64gm30",
+            "t": "Capture VE-Advisor requirements",
+            "who": "t4",
+            "init": "a2",
+            "ps": "2026-10-15",
+            "due": "2026-12-15",
+            "hrs": 60,
+            "st": "Doing",
+            "pc": 30,
+            "as": "2026-10-20",
+            "af": "",
+            "la": {
+                "d30": "Finalise requirements",
+                "d60": "Design review",
+                "d90": ""
+            },
+            "files": []
+        },
+        {
+            "id": "45lbglk",
+            "t": "Design integration with existing digital platforms",
+            "who": "t3",
+            "init": "a2",
+            "ps": "2026-12-01",
+            "due": "2027-01-31",
+            "hrs": 80,
+            "st": "To Do",
+            "pc": 0,
+            "as": "",
+            "af": "",
+            "la": {
+                "d30": "",
+                "d60": "Design integration",
+                "d90": "Prototype"
+            },
+            "files": []
+        },
+        {
+            "id": "r4ijees",
+            "t": "Phase 1: read P&ID-MTO data and compare with SP3D / Aveva Excel data",
+            "who": "t4",
+            "init": "a3",
+            "ps": "2026-09-01",
+            "due": "2026-12-31",
+            "hrs": 160,
+            "st": "Doing",
+            "pc": 35,
+            "as": "2026-09-10",
+            "af": "",
+            "la": {
+                "d30": "Complete comparison logic",
+                "d60": "Validate on pilot project",
+                "d90": "Roll out Phase 1"
+            },
+            "files": []
+        },
+        {
+            "id": "gfsodmb",
+            "t": "Phase 2: link directly with Aveva / SP3D database (planned)",
+            "who": "t3",
+            "init": "a3",
+            "ps": "2027-01-15",
+            "due": "2027-04-30",
+            "hrs": 200,
+            "st": "To Do",
+            "pc": 0,
+            "as": "",
+            "af": "",
+            "la": {
+                "d30": "",
+                "d60": "",
+                "d90": "Start Phase 2"
+            },
+            "files": []
+        },
+        {
+            "id": "bcnf44s",
+            "t": "Marine DPR chatbot development",
+            "who": "t4",
+            "init": "a4",
+            "ps": "2026-08-01",
+            "due": "2026-10-31",
+            "hrs": 120,
+            "st": "Done",
+            "pc": 100,
+            "as": "2026-08-05",
+            "af": "2026-10-28",
+            "la": {
+                "d30": "",
+                "d60": "",
+                "d90": ""
+            },
+            "files": []
+        },
+        {
+            "id": "myy3h6y",
+            "t": "Extract DPR parameters from PDF reports",
+            "who": "t4",
+            "init": "a4",
+            "ps": "2026-11-01",
+            "due": "2026-12-31",
+            "hrs": 100,
+            "st": "To Do",
+            "pc": 0,
+            "as": "",
+            "af": "",
+            "la": {
+                "d30": "Build extraction pipeline",
+                "d60": "Validate extraction accuracy",
+                "d90": ""
+            },
+            "files": []
+        },
+        {
+            "id": "obsg8ph",
+            "t": "Store extracted DPR data in database",
+            "who": "t3",
+            "init": "a4",
+            "ps": "2026-12-15",
+            "due": "2027-01-31",
+            "hrs": 60,
+            "st": "To Do",
+            "pc": 0,
+            "as": "",
+            "af": "",
+            "la": {
+                "d30": "",
+                "d60": "Create database",
+                "d90": "Load history"
+            },
+            "files": []
+        },
+        {
+            "id": "5i069ee",
+            "t": "Add real-time weather and sea-state data",
+            "who": "t3",
+            "init": "a4",
+            "ps": "2027-01-15",
+            "due": "2027-02-28",
+            "hrs": 60,
+            "st": "To Do",
+            "pc": 0,
+            "as": "",
+            "af": "",
+            "la": {
+                "d30": "",
+                "d60": "",
+                "d90": "Integrate weather feeds"
+            },
+            "files": []
+        },
+        {
+            "id": "5vzrlq5",
+            "t": "Vessel performance predictions (ML)",
+            "who": "t4",
+            "init": "a4",
+            "ps": "2027-02-01",
+            "due": "2027-04-30",
+            "hrs": 160,
+            "st": "To Do",
+            "pc": 0,
+            "as": "",
+            "af": "",
+            "la": {
+                "d30": "",
+                "d60": "",
+                "d90": "Develop prediction model"
+            },
+            "files": []
+        }
+    ],
+    "slides": [],
+    "inits": [
+        {
+            "id": "e1",
+            "name": "EPSILON Adoption",
+            "cat": "Digital Twin",
+            "ct": "N",
+            "sub": "A",
+            "ref": "Business / Planning functions",
+            "status": "On Track",
+            "p": 60,
+            "tgt": 0,
+            "real": 0,
+            "team": [
+                "t1",
+                "t2",
+                "t3",
+                "t6"
+            ],
+            "desc": "Easy-to-adopt alternative to PCIS: XPP evaluation, dashboards and CRPO project support on EPSILON.",
+            "ups": [
+                {
+                    "d": "2026-10-30",
+                    "t": "User requirement: alternative to PCIS - system must be easy to adopt and handle dynamic changes at project start."
+                },
+                {
+                    "d": "2026-10-30",
+                    "t": "XPP evaluated with real use case: CRPO 160 schedules uploaded in XPP."
+                },
+                {
+                    "d": "2026-10-30",
+                    "t": "S-curve dashboards completed for Engineering and Procurement (cross-checked against Excel)."
+                },
+                {
+                    "d": "2026-10-30",
+                    "t": "ADNOC 90-day schedule imported into EPSILON as pilot project."
+                },
+                {
+                    "d": "2026-10-30",
+                    "t": "25 evaluation licences received from Dassault for one month to explore XPP module adoption."
+                },
+                {
+                    "d": "2026-10-30",
+                    "t": "CRPO 145-146: updated progress data and 3D models kept available in EPSILON."
+                }
+            ],
+            "ach": [
+                "XPP evaluation with real use case (CRPO 160 schedules)",
+                "S-curve dashboards for Engineering and Procurement completed",
+                "ADNOC 90-day schedule imported as pilot",
+                "25 Dassault evaluation licences obtained"
+            ],
+            "cons": [
+                {
+                    "t": "Loading limitation - max 5000 activities at a time",
+                    "res": "Being resolved by Dassault Systemes (DS)",
+                    "open": true
+                },
+                {
+                    "t": "4D dashboards - to be done directly with XPP",
+                    "res": "DS to revert and explain existing functionality",
+                    "open": true
+                },
+                {
+                    "t": "Auto progress update to be developed",
+                    "res": "Being developed by DS",
+                    "open": true
+                },
+                {
+                    "t": "Programming required for mass upload and template creation",
+                    "res": "DS to revert",
+                    "open": true
+                }
+            ],
+            "ph": [],
+            "vl": [],
+            "cv": ""
+        },
+        {
+            "id": "e2",
+            "name": "AWP for COMP 4",
+            "cat": "Digital Twin",
+            "ct": "N",
+            "sub": "A",
+            "ref": "Project COMP 4",
+            "status": "On Track",
+            "p": 85,
+            "tgt": 0,
+            "real": 0,
+            "team": [
+                "t3",
+                "t6",
+                "t5"
+            ],
+            "desc": "Advanced Work Packaging for COMP 4 integrated with ProwPack and visualised through EPSILON dashboards.",
+            "ups": [
+                {
+                    "d": "2026-10-30",
+                    "t": "Integration with ProwPack completed."
+                },
+                {
+                    "d": "2026-10-30",
+                    "t": "AWP dashboards enhanced."
+                }
+            ],
+            "ach": [
+                "Integration with ProwPack completed",
+                "AWP dashboards enhanced"
+            ],
+            "cons": [],
+            "ph": [],
+            "vl": [],
+            "cv": ""
+        },
+        {
+            "id": "e3",
+            "name": "CRPO 97 - Data Handover",
+            "cat": "Digital Twin",
+            "ct": "C",
+            "sub": "A",
+            "ref": "Client data handover (CFIHOS)",
+            "status": "On Track",
+            "p": 40,
+            "tgt": 0,
+            "real": 0,
+            "team": [
+                "t5",
+                "t1"
+            ],
+            "desc": "Preparation of project data handover: CFIHOS templates and 2D-3D linkages.",
+            "ups": [
+                {
+                    "d": "2026-10-30",
+                    "t": "Data handover preparations in progress."
+                },
+                {
+                    "d": "2026-10-30",
+                    "t": "CFIHOS templates being filled by the project team."
+                },
+                {
+                    "d": "2026-10-30",
+                    "t": "2D-3D linkages being done by the project team."
+                }
+            ],
+            "ach": [],
+            "cons": [],
+            "ph": [],
+            "vl": [],
+            "cv": ""
+        },
+        {
+            "id": "e4",
+            "name": "ADNOC Pkg 1 - Digital Twin",
+            "cat": "Digital Twin",
+            "ct": "C",
+            "sub": "A",
+            "ref": "ADNOC Package 1 contract",
+            "status": "On Track",
+            "p": 40,
+            "tgt": 0,
+            "real": 0,
+            "team": [
+                "t1",
+                "t6"
+            ],
+            "desc": "Digital Twin for ADNOC Package 1: client alignment, execution plan, EPSILON dashboards and AR/VR options.",
+            "ups": [
+                {
+                    "d": "2026-10-30",
+                    "t": "Impactful KOM - client was impressed with the KOM presentation."
+                },
+                {
+                    "d": "2026-10-30",
+                    "t": "D-Twin alignment meeting held with client PMT; EPSILON showcased. Client expects a few progress dashboards and 3D models in EPSILON."
+                },
+                {
+                    "d": "2026-10-30",
+                    "t": "Project team keen to implement EPSILON; roadmap presented to Project Directors and Project Managers."
+                },
+                {
+                    "d": "2026-10-30",
+                    "t": "Scope understanding completed; project execution plan being prepared."
+                },
+                {
+                    "d": "2026-10-30",
+                    "t": "Technical proposal received from OCTAVE UAE; AR/VR discussions started with Attral."
+                }
+            ],
+            "ach": [
+                "Impactful KOM - client impressed",
+                "Roadmap presented to Project Directors and Managers",
+                "Scope understanding completed"
+            ],
+            "cons": [],
+            "ph": [],
+            "vl": [],
+            "cv": ""
+        },
+        {
+            "id": "e5",
+            "name": "ADNOC Interface Management via EPSILON",
+            "cat": "Digital Twin",
+            "ct": "C",
+            "sub": "A",
+            "ref": "ADNOC interface management",
+            "status": "At Risk",
+            "p": 55,
+            "tgt": 0,
+            "real": 0,
+            "team": [
+                "t1",
+                "t3"
+            ],
+            "desc": "Interface management for ADNOC through EPSILON.",
+            "ups": [
+                {
+                    "d": "2026-10-30",
+                    "t": "KOM demo given on interface management through EPSILON."
+                },
+                {
+                    "d": "2026-10-30",
+                    "t": "Internal adoption started."
+                },
+                {
+                    "d": "2026-10-30",
+                    "t": "Client adoption pending due to security approval of the platform from ADNOC."
+                }
+            ],
+            "ach": [
+                "KOM demo of interface management completed",
+                "Internal adoption started"
+            ],
+            "cons": [
+                {
+                    "t": "Client adoption pending - security approval of the platform from ADNOC",
+                    "res": "Follow up on security approval; continue internal adoption meanwhile",
+                    "open": true
+                }
+            ],
+            "ph": [],
+            "vl": [],
+            "cv": ""
+        },
+        {
+            "id": "e6",
+            "name": "COMP 4 - DSI",
+            "cat": "Digital Twin",
+            "ct": "C",
+            "sub": "A",
+            "ref": "Project COMP 4",
+            "status": "Planning",
+            "p": 15,
+            "tgt": 0,
+            "real": 0,
+            "team": [
+                "t1",
+                "t3"
+            ],
+            "desc": "DSI workshops and data collection strategy for COMP 4.",
+            "ups": [
+                {
+                    "d": "2026-10-30",
+                    "t": "Various DSI workshops planned in the next 3 months."
+                },
+                {
+                    "d": "2026-10-30",
+                    "t": "Data collection strategy being worked out."
+                }
+            ],
+            "ach": [],
+            "cons": [],
+            "ph": [],
+            "vl": [],
+            "cv": ""
+        },
+        {
+            "id": "a1",
+            "name": "SearchWell2 - Engineering Chatbot",
+            "cat": "AI / ML",
+            "ct": "N",
+            "sub": "A",
+            "ref": "Engineering Dept",
+            "status": "On Track",
+            "p": 90,
+            "tgt": 0,
+            "real": 0,
+            "team": [
+                "t4",
+                "t3"
+            ],
+            "desc": "Engineering chatbot over engineering tables data.",
+            "ups": [
+                {
+                    "d": "2026-10-30",
+                    "t": "SearchWell2 completed for all tables data."
+                },
+                {
+                    "d": "2026-10-30",
+                    "t": "Demo given to the engineering team."
+                },
+                {
+                    "d": "2026-10-30",
+                    "t": "Old-to-new server migration pending from Engineering dept."
+                }
+            ],
+            "ach": [
+                "Completed for all tables data",
+                "Demo given to engineering team"
+            ],
+            "cons": [
+                {
+                    "t": "Old-to-new server migration pending from Engineering dept",
+                    "res": "Follow up with Engineering dept for migration slot",
+                    "open": true
+                }
+            ],
+            "ph": [],
+            "vl": [],
+            "cv": ""
+        },
+        {
+            "id": "a2",
+            "name": "VE-Advisor - AI Value Engineering Assistant",
+            "cat": "AI / ML",
+            "ct": "N",
+            "sub": "S",
+            "ref": "",
+            "status": "Planning",
+            "p": 10,
+            "tgt": 0,
+            "real": 0,
+            "team": [
+                "t4",
+                "t3"
+            ],
+            "desc": "AI-powered Value Engineering assistant integrated with existing digital platforms.",
+            "ups": [
+                {
+                    "d": "2026-10-30",
+                    "t": "Requirement stage - implementing VE-Advisor, an AI-powered Value Engineering assistant integrated with existing digital platforms."
+                }
+            ],
+            "ach": [],
+            "cons": [],
+            "ph": [],
+            "vl": [],
+            "cv": ""
+        },
+        {
+            "id": "a3",
+            "name": "P&ID to 3D Validation",
+            "cat": "AI / ML",
+            "ct": "N",
+            "sub": "A",
+            "ref": "Engineering Dept",
+            "status": "On Track",
+            "p": 25,
+            "tgt": 0,
+            "real": 0,
+            "team": [
+                "t4",
+                "t3"
+            ],
+            "desc": "Validate P&ID data against 3D model data from SP3D / Aveva.",
+            "ups": [
+                {
+                    "d": "2026-10-30",
+                    "t": "Requirement: P&ID data from P&ID-MTO utility to be read and compared with Excel data provided from SP3D / Aveva."
+                },
+                {
+                    "d": "2026-10-30",
+                    "t": "Phase 2 planned: link directly with Aveva / SP3D database."
+                }
+            ],
+            "ach": [],
+            "cons": [],
+            "ph": [],
+            "vl": [],
+            "cv": ""
+        },
+        {
+            "id": "a4",
+            "name": "Marine DPR Database & Predictions",
+            "cat": "AI / ML",
+            "ct": "N",
+            "sub": "A",
+            "ref": "Marine",
+            "status": "On Track",
+            "p": 35,
+            "tgt": 0,
+            "real": 0,
+            "team": [
+                "t4",
+                "t3"
+            ],
+            "desc": "AI solution to extract, structure and analyse key parameters from PDF Vessel Daily Progress Reports (DPRs) for centralised data and analytics-driven decisions.",
+            "ups": [
+                {
+                    "d": "2026-10-30",
+                    "t": "DPR chatbot development completed."
+                },
+                {
+                    "d": "2026-10-30",
+                    "t": "Plan ahead: extract DPR parameters, store in database, add real-time weather and sea-state data, predict vessel performance."
+                }
+            ],
+            "ach": [
+                "DPR chatbot development completed"
+            ],
+            "cons": [],
+            "ph": [],
+            "vl": [],
+            "cv": ""
+        }
+    ]
+}
